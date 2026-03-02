@@ -1,0 +1,39 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and how to reproduce it.
+      placeholder: |
+        Describe the bug and steps to reproduce...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      placeholder: What should have happened instead...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (optional)
+      description: Paste relevant logs from the "Ralph Loop" output channel
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "e.g., macOS 14, Antigravity Version 1.14.2 (or VS Code Version 1.104.0), Extension Version 0.1.0"
+    validations:
+      required: false
