@@ -42,7 +42,7 @@ async function createAntigravityClient(outputChannel, configOverrides, workspace
     if (workspacePath) {
         outputChannel.appendLine(`[AntigravityClient] Searching for workspace: ${workspacePath}`);
     }
-    const processInfo = (0, discovery_1.extractAntigravityFromProcess)(workspacePath);
+    const processInfo = await (0, discovery_1.extractAntigravityFromProcess)(workspacePath);
     if (workspacePath && processInfo?.workspaceId) {
         outputChannel.appendLine(`[AntigravityClient] Found Antigravity process for workspace: ${processInfo.workspaceId}`);
         if (processInfo.workspaceId !== (0, discovery_1.pathToWorkspaceId)(workspacePath)) {
