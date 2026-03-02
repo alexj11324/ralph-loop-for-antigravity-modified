@@ -44,6 +44,7 @@ const path = __importStar(require("path"));
 const os = __importStar(require("os"));
 const state = __importStar(require("../state"));
 const child_process_1 = require("child_process");
+const { execFileSync } = require("child_process");
 const protobuf_1 = require("./protobuf");
 const isWindows = process.platform === "win32";
 function isDebugLoggingEnabled() {
@@ -62,16 +63,26 @@ function debugLog(message, data) {
         state.outputChannel.appendLine(fullMessage);
     }
 }
-function execCommand(command, options = {}) {
-    const cmdName = options.commandName || command.slice(0, 50);
+function execCommand(commandOrFile, argsOrOptions = {}, options = {}) {
+    let args = [];
+    if (Array.isArray(argsOrOptions)) {
+        args = argsOrOptions;
+    } else {
+        options = argsOrOptions;
+    }
+    const isArrayArgs = Array.isArray(argsOrOptions);
+    const cmdName = options.commandName || (isArrayArgs ? `${commandOrFile} ${args.join(" ")}`.slice(0, 50) : commandOrFile.slice(0, 50));
     debugLog(`Executing command: ${cmdName}`);
-    debugLog(`Full command`, command);
+    debugLog(`Full command`, isArrayArgs ? [commandOrFile, ...args] : commandOrFile);
     try {
-        const output = (0, child_process_1.execSync)(command, {
-            encoding: "utf8",
-            maxBuffer: 10 * 1024 * 1024,
-            ...options,
-        });
+        const execOptions = {
+             encoding: "utf8",
+             maxBuffer: 10 * 1024 * 1024,
+             ...options,
+        };
+        const output = isArrayArgs
+            ? execFileSync(commandOrFile, args, execOptions)
+            : (0, child_process_1.execSync)(commandOrFile, execOptions);
         if (isDebugLoggingEnabled()) {
             const lines = output.split("\n");
             debugLog(`Command stdout (${lines.length} lines, ${output.length} chars)`);
@@ -450,8 +461,9 @@ function getListeningPortsWindows(pid) {
 function getListeningPortsUnix(pid) {
     debugLog(`Looking for listening ports on Unix for PID=${pid}`);
     const ports = [];
-    const lsofCommand = `lsof -nP -iTCP -sTCP:LISTEN -p ${pid}`;
-    const result = execCommand(lsofCommand, { commandName: `lsof -p ${pid}` });
+    const lsofCommand = "lsof";
+    const lsofArgs = ["-nP", "-iTCP", "-sTCP:LISTEN", "-p", pid.toString()];
+    const result = execCommand(lsofCommand, lsofArgs, { commandName: `lsof -p ${pid}` });
     if (result.error || !result.output) {
         debugLog("lsof command failed", result.error?.message);
         return ports;
