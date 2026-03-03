@@ -4,6 +4,7 @@
 >
 > **Key improvements in this fork:**
 > - 🌐 **Chinese language support** (简体中文) — UI, commands, and configuration descriptions
+> - 🔍 **Smart file auto-detection** — automatically discovers PRD, TASKS, PROMPT, SPEC, and 20+ file patterns in your workspace
 > - 🔄 **Auto-reconnect with breakpoint resume** (断点续跑) — automatically recovers from Antigravity server crashes with exponential backoff (up to 5 retries, 15s–120s delays)
 > - 💾 **Settings persistence** — remembers your last used model, mode, prompt file, and other settings across sessions
 > - 🤖 **Latest model support**: Claude Sonnet 4.6 (Thinking), Claude Opus 4.6 (Thinking), Gemini 3.1 Pro (High/Low), GPT-OSS 120B
@@ -108,6 +109,15 @@ When the Antigravity server crashes or restarts mid-iteration:
 ### 💾 Settings Persistence
 
 Your session configuration (model, mode, max iterations, prompt file, etc.) is automatically saved to workspace state and restored when you reopen the project.
+
+### 🔍 Smart File Auto-Detection
+
+When selecting task or prompt files, the extension automatically scans your workspace for matching files:
+
+- **Task files**: `PRD.md`, `TASKS.md`, `TODO.md`, `SPEC.md`, `REQUIREMENTS.md`, `BACKLOG.md`, `ROADMAP.md`, `PLAN.md`, `ISSUES.md` (+ case variants and `.txt`)
+- **Prompt files**: `PROMPT.md`, `INSTRUCTIONS.md`, `SYSTEM_PROMPT.md`, `AGENT_PROMPT.md`, `CONTEXT.md` (+ case variants and `.txt`)
+- Also searches subdirectories for files containing these keywords
+- QuickPick shows detected files with a "custom path" fallback option
 
 ### Activity Bar & Sidebar
 
