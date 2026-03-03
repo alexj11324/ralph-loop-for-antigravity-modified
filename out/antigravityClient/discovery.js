@@ -42,10 +42,11 @@ const vscode = __importStar(require("vscode"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const os = __importStar(require("os"));
+const util = __importStar(require("util"));
 const state = __importStar(require("../state"));
 const child_process_1 = require("child_process");
-const execFileSync = child_process_1.execFileSync;
 const protobuf_1 = require("./protobuf");
+const execAsync = util.promisify(child_process_1.exec);
 const isWindows = process.platform === "win32";
 function isDebugLoggingEnabled() {
     return vscode.workspace
@@ -63,21 +64,17 @@ function debugLog(message, data) {
         state.outputChannel.appendLine(fullMessage);
     }
 }
-function execCommand(commandOrFile, args = [], options = {}) {
-    const hasArgs = args.length > 0;
-    const cmdNameBase = hasArgs ? `${commandOrFile} ${args.join(" ")}` : commandOrFile;
-    const cmdName = (options.commandName || cmdNameBase).slice(0, 50);
+async function execCommand(command, options = {}) {
+    const cmdName = options.commandName || command.slice(0, 50);
     debugLog(`Executing command: ${cmdName}`);
-    debugLog(`Full command`, hasArgs ? [commandOrFile, ...args] : commandOrFile);
+    debugLog(`Full command`, command);
     try {
-        const execOptions = {
+        const { stdout, stderr } = await execAsync(command, {
             encoding: "utf8",
             maxBuffer: 10 * 1024 * 1024,
             ...options,
-        };
-        const output = hasArgs
-            ? execFileSync(commandOrFile, args, execOptions)
-            : (0, child_process_1.execSync)(commandOrFile, execOptions);
+        });
+        const output = stdout;
         if (isDebugLoggingEnabled()) {
             const lines = output.split("\n");
             debugLog(`Command stdout (${lines.length} lines, ${output.length} chars)`);
@@ -87,8 +84,18 @@ function execCommand(commandOrFile, args = [], options = {}) {
             else {
                 debugLog(`Output preview (first 10 lines)`, lines.slice(0, 10).join("\n") + "\n...");
             }
+            if (stderr && stderr.length > 0) {
+                const errLines = stderr.split("\n");
+                debugLog(`Command stderr (${errLines.length} lines, ${stderr.length} chars)`);
+                if (errLines.length <= 5) {
+                    debugLog(`Stderr preview`, stderr);
+                }
+                else {
+                    debugLog(`Stderr preview (first 5 lines)`, errLines.slice(0, 5).join("\n") + "\n...");
+                }
+            }
         }
-        return { output: output, error: null };
+        return { output: output, stderr: stderr || "", error: null };
     }
     catch (err) {
         const error = err;
@@ -97,7 +104,7 @@ function execCommand(commandOrFile, args = [], options = {}) {
             stderr: error.stderr?.slice(0, 500),
             stdout: error.stdout?.slice(0, 500),
         });
-        return { output: null, error };
+        return { output: null, stderr: error.stderr || "", error };
     }
 }
 function pathToWorkspaceId(filePath) {
@@ -116,20 +123,20 @@ function normalizeWorkspaceIdForComparison(workspaceId) {
     // Normalize for comparison by treating - and _ as equivalent
     return workspaceId.replace(/-/g, "_").toLowerCase();
 }
-function extractAntigravityFromProcess(workspacePath) {
+async function extractAntigravityFromProcess(workspacePath) {
     try {
         if (isWindows) {
-            return extractAntigravityFromProcessWindows(workspacePath);
+            return await extractAntigravityFromProcessWindows(workspacePath);
         }
-        return extractAntigravityFromProcessUnix(workspacePath);
+        return await extractAntigravityFromProcessUnix(workspacePath);
     }
     catch {
         return null;
     }
 }
-function getWindowsVersion() {
-    try {
-        const output = (0, child_process_1.execSync)("ver", { encoding: "utf8" });
+async function getWindowsVersion() {
+    const { output, error } = await execCommand("ver");
+    if (!error && output) {
         // Output format: "Microsoft Windows [Version 10.0.19045.1234]"
         // Windows 11 also shows "10.0.xxxxx" - use build number to detect
         const match = output.match(/Version (\d+)\.(\d+)\.(\d+)/);
@@ -144,25 +151,20 @@ function getWindowsVersion() {
             };
         }
     }
-    catch {
-        // Fallback: try registry
-        try {
-            const output = (0, child_process_1.execSync)('reg query "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion" /v CurrentBuildNumber', { encoding: "utf8" });
-            const match = output.match(/CurrentBuildNumber\s+REG_SZ\s+(\d+)/);
-            if (match) {
-                const build = parseInt(match[1], 10);
-                const isWin11 = build >= 22000;
-                return { major: isWin11 ? 11 : 10, build, isWin11 };
-            }
-        }
-        catch {
-            // Ignore
+    // Fallback: try registry
+    const registryResult = await execCommand('reg query "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion" /v CurrentBuildNumber');
+    if (!registryResult.error && registryResult.output) {
+        const match = registryResult.output.match(/CurrentBuildNumber\s+REG_SZ\s+(\d+)/);
+        if (match) {
+            const build = parseInt(match[1], 10);
+            const isWin11 = build >= 22000;
+            return { major: isWin11 ? 11 : 10, build, isWin11 };
         }
     }
     return { major: 10, build: 0, isWin11: false }; // Default assume Windows 10
 }
-function extractAntigravityFromProcessWindows(workspacePath) {
-    const winVer = getWindowsVersion();
+async function extractAntigravityFromProcessWindows(workspacePath) {
+    const winVer = await getWindowsVersion();
     debugLog(`Detected Windows version: major=${winVer.major}, build=${winVer.build}, isWin11=${winVer.isWin11}`);
     // Use alternative approach for Windows 10 to avoid ConvertTo-Json errors
     // Windows 11 (build 22000+) generally has better PowerShell/.NET support
@@ -170,12 +172,12 @@ function extractAntigravityFromProcessWindows(workspacePath) {
     let processes = [];
     if (useLegacyApproach) {
         debugLog("Using legacy process enumeration approach for Windows 10/older");
-        processes = getProcessesLegacy();
+        processes = await getProcessesLegacy();
     }
     else {
         debugLog("Using JSON-based process enumeration for Windows 11+");
         const psCommand = 'powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Json -Compress"';
-        const result = execCommand(psCommand, [], {
+        const result = await execCommand(psCommand, {
             commandName: "Get-CimInstance Win32_Process",
         });
         if (result.error || !result.output) {
@@ -190,7 +192,7 @@ function extractAntigravityFromProcessWindows(workspacePath) {
             }
             catch (parseErr) {
                 debugLog("Failed to parse PowerShell JSON output, using legacy fallback", parseErr.message);
-                processes = getProcessesLegacy();
+                processes = await getProcessesLegacy();
             }
         }
     }
@@ -257,11 +259,11 @@ function extractAntigravityFromProcessWindows(workspacePath) {
     }
     return fallbackProcess;
 }
-function getProcessesLegacy() {
+async function getProcessesLegacy() {
     // Use WMIC instead of PowerShell ConvertTo-Csv to avoid .NET Framework dependencies
     // WMIC is deprecated but still available on Windows 10 and doesn't use System.Web
     const wmicCommand = "wmic process get ProcessId,CommandLine /format:csv";
-    const result = execCommand(wmicCommand, [], {
+    const result = await execCommand(wmicCommand, {
         commandName: "wmic process",
     });
     if (result.error || !result.output) {
@@ -300,9 +302,9 @@ function getProcessesLegacy() {
     debugLog(`WMIC legacy approach parsed ${processes.length} processes`);
     return processes;
 }
-function extractAntigravityFromProcessUnix(workspacePath) {
+async function extractAntigravityFromProcessUnix(workspacePath) {
     const psCommand = "ps -ax -o pid=,command=";
-    const result = execCommand(psCommand, [], { commandName: "ps -ax" });
+    const result = await execCommand(psCommand, { commandName: "ps -ax" });
     if (result.error || !result.output) {
         debugLog("Unix ps command failed", result.error?.message);
         return null;
@@ -386,7 +388,7 @@ async function extractOAuthToken() {
 async function discoverAntigravityPort(pid, workspacePath) {
     let processInfo = null;
     if (!pid) {
-        processInfo = extractAntigravityFromProcess(workspacePath);
+        processInfo = await extractAntigravityFromProcess(workspacePath);
         if (!processInfo?.pid) {
             return null;
         }
@@ -394,16 +396,16 @@ async function discoverAntigravityPort(pid, workspacePath) {
     }
     let listeningPorts = [];
     if (isWindows) {
-        listeningPorts = getListeningPortsWindows(pid);
+        listeningPorts = await getListeningPortsWindows(pid);
     }
     else {
-        listeningPorts = getListeningPortsUnix(pid);
+        listeningPorts = await getListeningPortsUnix(pid);
     }
     if (listeningPorts.length === 0) {
         return null;
     }
     if (!processInfo) {
-        processInfo = extractAntigravityFromProcess(workspacePath);
+        processInfo = await extractAntigravityFromProcess(workspacePath);
     }
     const csrfToken = processInfo?.csrfToken;
     for (const port of listeningPorts) {
@@ -414,11 +416,11 @@ async function discoverAntigravityPort(pid, workspacePath) {
     }
     return null;
 }
-function getListeningPortsWindows(pid) {
+async function getListeningPortsWindows(pid) {
     debugLog(`Looking for listening ports on Windows for PID=${pid}`);
     const ports = [];
     const netstatCommand = "netstat -ano";
-    const result = execCommand(netstatCommand, [], { commandName: "netstat -ano" });
+    const result = await execCommand(netstatCommand, { commandName: "netstat -ano" });
     if (result.error || !result.output) {
         debugLog("netstat command failed", result.error?.message);
         return ports;
@@ -453,12 +455,11 @@ function getListeningPortsWindows(pid) {
     }
     return ports;
 }
-function getListeningPortsUnix(pid) {
+async function getListeningPortsUnix(pid) {
     debugLog(`Looking for listening ports on Unix for PID=${pid}`);
     const ports = [];
-    const lsofCommand = "lsof";
-    const lsofArgs = ["-nP", "-iTCP", "-sTCP:LISTEN", "-p", pid.toString()];
-    const result = execCommand(lsofCommand, lsofArgs, { commandName: `lsof -p ${pid}` });
+    const lsofCommand = `lsof -nP -iTCP -sTCP:LISTEN -p ${pid}`;
+    const result = await execCommand(lsofCommand, { commandName: `lsof -p ${pid}` });
     if (result.error || !result.output) {
         debugLog("lsof command failed", result.error?.message);
         return ports;
