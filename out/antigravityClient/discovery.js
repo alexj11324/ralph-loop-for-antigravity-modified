@@ -210,6 +210,7 @@ function extractAntigravityFromProcessWindows(workspacePath) {
     }
     else {
         debugLog("Using JSON-based process enumeration for Windows 11+");
+        const psCommand = 'powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Json -Compress"';
         const result = execCommand("powershell.exe", ["-NoProfile", "-Command", "Get-CimInstance Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Json -Compress"], {
             commandName: "Get-CimInstance Win32_Process",
         });
