@@ -222,6 +222,7 @@ The extension opens your task/prompt file before starting to ensure the agent wo
 
 ## Links
 
+- [Open VSX Marketplace](https://open-vsx.org/extension/alexj11324/ralph-loop-for-antigravity-updated)
 - [GitHub Repository (Fork)](https://github.com/alexj11324/ralph-loop-for-antigravity-modified)
 - [Report Issues](https://github.com/alexj11324/ralph-loop-for-antigravity-modified/issues)
 - [Original Project](https://github.com/abhishekbhakat/ralph-loop-for-antigravity) by Abhishek Bhakat
