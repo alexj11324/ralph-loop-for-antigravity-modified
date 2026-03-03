@@ -62,12 +62,54 @@ function debugLog(message, data) {
         state.outputChannel.appendLine(fullMessage);
     }
 }
-function execCommand(command, options = {}) {
-    const cmdName = options.commandName || command.slice(0, 50);
+function execCommand(command, args = [], options = {}) {
+    if (typeof command === 'string' && arguments.length === 2 && !Array.isArray(arguments[1])) {
+        // Handle legacy call: execCommand('cmd arg1 arg2', {options})
+        options = arguments[1] || {};
+
+        // We're switching from execSync to execFileSync for security against command injection.
+        // For backwards compatibility with calls passing strings, parse them
+
+        // If it looks like a powershell command, preserve the whole command string
+        // this is tricky since we really should be using spawn/execFile with proper array args
+        if (command.startsWith('powershell.exe')) {
+             const parts = command.match(/(?:[^\s"]+|"[^"]*")+/g);
+             if (parts && parts.length > 0) {
+                 command = parts[0];
+                 args = parts.slice(1).map(p => p.replace(/^"|"$/g, ''));
+             } else {
+                 args = [];
+             }
+        }
+        else if (command.startsWith('wmic ')) {
+            args = command.substring(5).split(' ');
+            command = 'wmic';
+        }
+        else if (command.startsWith('ps ')) {
+             args = command.substring(3).split(' ').filter(x => x);
+             command = 'ps';
+        }
+        else if (command.startsWith('netstat ')) {
+             args = command.substring(8).split(' ').filter(x => x);
+             command = 'netstat';
+        }
+        else if (command.startsWith('lsof ')) {
+             args = command.substring(5).split(' ').filter(x => x);
+             command = 'lsof';
+        }
+        else {
+             // Fallback for simple space delimited commands
+             const parts = command.split(' ').filter(x => x);
+             command = parts[0];
+             args = parts.slice(1);
+        }
+    }
+
+    const cmdName = options.commandName || (command + ' ' + args.join(' ')).slice(0, 50);
     debugLog(`Executing command: ${cmdName}`);
-    debugLog(`Full command`, command);
+    debugLog(`Command: ${command}, args: ${JSON.stringify(args)}`);
     try {
-        const output = (0, child_process_1.execSync)(command, {
+        const output = (0, child_process_1.execFileSync)(command, args, {
             encoding: "utf8",
             maxBuffer: 10 * 1024 * 1024,
             ...options,
@@ -123,7 +165,7 @@ function extractAntigravityFromProcess(workspacePath) {
 }
 function getWindowsVersion() {
     try {
-        const output = (0, child_process_1.execSync)("ver", { encoding: "utf8" });
+        const output = (0, child_process_1.execFileSync)("cmd.exe", ["/c", "ver"], { encoding: "utf8" });
         // Output format: "Microsoft Windows [Version 10.0.19045.1234]"
         // Windows 11 also shows "10.0.xxxxx" - use build number to detect
         const match = output.match(/Version (\d+)\.(\d+)\.(\d+)/);
@@ -141,7 +183,7 @@ function getWindowsVersion() {
     catch {
         // Fallback: try registry
         try {
-            const output = (0, child_process_1.execSync)('reg query "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion" /v CurrentBuildNumber', { encoding: "utf8" });
+            const output = (0, child_process_1.execFileSync)("reg.exe", ["query", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "/v", "CurrentBuildNumber"], { encoding: "utf8" });
             const match = output.match(/CurrentBuildNumber\s+REG_SZ\s+(\d+)/);
             if (match) {
                 const build = parseInt(match[1], 10);
@@ -168,8 +210,7 @@ function extractAntigravityFromProcessWindows(workspacePath) {
     }
     else {
         debugLog("Using JSON-based process enumeration for Windows 11+");
-        const psCommand = 'powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Json -Compress"';
-        const result = execCommand(psCommand, {
+        const result = execCommand("powershell.exe", ["-NoProfile", "-Command", "Get-CimInstance Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Json -Compress"], {
             commandName: "Get-CimInstance Win32_Process",
         });
         if (result.error || !result.output) {
@@ -254,8 +295,7 @@ function extractAntigravityFromProcessWindows(workspacePath) {
 function getProcessesLegacy() {
     // Use WMIC instead of PowerShell ConvertTo-Csv to avoid .NET Framework dependencies
     // WMIC is deprecated but still available on Windows 10 and doesn't use System.Web
-    const wmicCommand = "wmic process get ProcessId,CommandLine /format:csv";
-    const result = execCommand(wmicCommand, {
+    const result = execCommand("wmic", ["process", "get", "ProcessId,CommandLine", "/format:csv"], {
         commandName: "wmic process",
     });
     if (result.error || !result.output) {
@@ -295,8 +335,7 @@ function getProcessesLegacy() {
     return processes;
 }
 function extractAntigravityFromProcessUnix(workspacePath) {
-    const psCommand = "ps -ax -o pid=,command=";
-    const result = execCommand(psCommand, { commandName: "ps -ax" });
+    const result = execCommand("ps", ["-ax", "-o", "pid=,command="], { commandName: "ps -ax" });
     if (result.error || !result.output) {
         debugLog("Unix ps command failed", result.error?.message);
         return null;
@@ -411,8 +450,7 @@ async function discoverAntigravityPort(pid, workspacePath) {
 function getListeningPortsWindows(pid) {
     debugLog(`Looking for listening ports on Windows for PID=${pid}`);
     const ports = [];
-    const netstatCommand = "netstat -ano";
-    const result = execCommand(netstatCommand, { commandName: "netstat -ano" });
+    const result = execCommand("netstat", ["-ano"], { commandName: "netstat -ano" });
     if (result.error || !result.output) {
         debugLog("netstat command failed", result.error?.message);
         return ports;
@@ -450,8 +488,7 @@ function getListeningPortsWindows(pid) {
 function getListeningPortsUnix(pid) {
     debugLog(`Looking for listening ports on Unix for PID=${pid}`);
     const ports = [];
-    const lsofCommand = `lsof -nP -iTCP -sTCP:LISTEN -p ${pid}`;
-    const result = execCommand(lsofCommand, { commandName: `lsof -p ${pid}` });
+    const result = execCommand("lsof", ["-nP", "-iTCP", "-sTCP:LISTEN", "-p", pid.toString()], { commandName: `lsof -p ${pid}` });
     if (result.error || !result.output) {
         debugLog("lsof command failed", result.error?.message);
         return ports;
