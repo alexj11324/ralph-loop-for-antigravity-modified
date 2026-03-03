@@ -84,7 +84,7 @@ async function createAntigravityClient(outputChannel, configOverrides, workspace
         }
     }
     const client = new client_1.AntigravityClient({ port, csrfToken, oauthToken }, outputChannel);
-    await client.connect();
+    await client.connectWithRetry();
     return client;
 }
 //# sourceMappingURL=factory.js.map

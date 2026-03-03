@@ -1,22 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = { enumerable: true, get: function () { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -69,6 +69,36 @@ class AntigravityClient {
                 }
             }, 5000);
         });
+    }
+    /**
+     * Connect with exponential backoff retry.
+     * Retries on ECONNREFUSED/ECONNRESET with increasing delays.
+     */
+    async connectWithRetry(maxRetries = 5, baseDelayMs = 2000) {
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                await this.connect();
+                if (attempt > 0) {
+                    this.log(`Reconnected successfully after ${attempt} retries`);
+                }
+                return;
+            }
+            catch (error) {
+                const msg = error instanceof Error ? error.message : String(error);
+                if (attempt >= maxRetries) {
+                    this.log(`Connection failed after ${maxRetries} retries: ${msg}`);
+                    throw error;
+                }
+                const delay = baseDelayMs * Math.pow(2, attempt);
+                this.log(`Connection attempt ${attempt + 1} failed (${msg}), retrying in ${delay / 1000}s...`);
+                await new Promise((r) => setTimeout(r, delay));
+                // Clean up failed client before retry
+                if (this.client) {
+                    try { this.client.close(); } catch (_) { }
+                    this.client = null;
+                }
+            }
+        }
     }
     disconnect() {
         if (!this.client)

@@ -1,22 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = { enumerable: true, get: function () { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -113,6 +113,43 @@ async function runRalphLoopIteration(config, context) {
                 state.progressLogger?.warn("Stopped due to user request", "Iteration");
                 break;
             }
+            // Check if this is a connection error (server crash/restart)
+            const isConnectionError = /ECONNREFUSED|ECONNRESET|Connection timeout|connection.*closed|server.*closed|Not connected/i.test(errorMessage);
+            if (isConnectionError) {
+                // Track reconnect attempts for this iteration
+                if (!config._reconnectAttempts) config._reconnectAttempts = 0;
+                config._reconnectAttempts++;
+                const maxReconnectAttempts = 3;
+                if (config._reconnectAttempts <= maxReconnectAttempts) {
+                    const delay = 5000 * Math.pow(2, config._reconnectAttempts - 1); // 5s, 10s, 20s
+                    state.progressLogger?.warn(
+                        `Connection lost (attempt ${config._reconnectAttempts}/${maxReconnectAttempts}). Waiting ${delay / 1000}s before reconnecting...`,
+                        "Reconnect"
+                    );
+                    // Clear old client
+                    if (state.antigravityClient) {
+                        try { state.antigravityClient.disconnect(); } catch (_) { }
+                        state.setAntigravityClient(null);
+                    }
+                    // Wait with exponential backoff
+                    await new Promise((r) => setTimeout(r, delay));
+                    // Roll back iteration counter so this iteration is retried
+                    state.decrementIteration();
+                    state.progressLogger?.info("Attempting to reconnect to Antigravity server...", "Reconnect");
+                    continue; // Retry this iteration
+                }
+                else {
+                    state.progressLogger?.error(
+                        `Failed to reconnect after ${maxReconnectAttempts} attempts. Stopping loop.`,
+                        "Reconnect"
+                    );
+                    config._reconnectAttempts = 0;
+                }
+            }
+            else {
+                // Reset reconnect counter on non-connection errors
+                config._reconnectAttempts = 0;
+            }
             const action = await state.notificationService?.notifyIterationError(state.currentIteration, errorMessage);
             if (action === "Show Output") {
                 state.outputChannel.show();
@@ -123,6 +160,8 @@ async function runRalphLoopIteration(config, context) {
             }
             throw error;
         }
+        // Reset reconnect counter on successful iteration
+        config._reconnectAttempts = 0;
         state.progressLogger?.streamProgress("Completed", 5, 5, "Iteration finished successfully");
         if (state.ralphLoopStatus !== "running" || state.stopRequested) {
             break;
