@@ -45,10 +45,12 @@ async function isCompletionMarkerPresent(config) {
     const progressUri = vscode.Uri.file(`${config.workspaceRoot}/${config.progressFile}`);
     try {
         const content = await vscode.workspace.fs.readFile(progressUri);
-        const text = new TextDecoder().decode(content);
-        const lines = text.split(/\r?\n/);
-        const tail = lines.slice(-5).join("\n");
-        return tail.includes(config.doneMarker);
+        // Optimize memory and CPU for large progress files by only decoding the end
+        // since the done marker is always appended at the end of the file.
+        const readSize = Math.min(content.length, 4096);
+        const tailBuffer = content.subarray(content.length - readSize);
+        const tailText = new TextDecoder().decode(tailBuffer);
+        return tailText.includes(config.doneMarker);
     }
     catch (error) {
         state.progressLogger?.warn(`Could not read progress file: ${error}`, "Loop");
