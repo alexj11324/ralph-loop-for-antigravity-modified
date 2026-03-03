@@ -3,7 +3,7 @@
   "displayName": "Ralph Loop for Antigravity (Updated)",
   "description": "A fork of Ralph Loop for Antigravity with latest model support. Based on abhishekbhakat/ralph-loop-for-antigravity.",
   "icon": "resources/icons/logo.png",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "publisher": "alexj11324",
   "license": "MIT",
   "repository": {
@@ -282,7 +282,6 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
@@ -293,14 +292,14 @@
     "package": "vsce package"
   },
   "devDependencies": {
-    "@types/vscode": "^1.75.0",
     "@types/node": "^22.0.0",
+    "@types/vscode": "^1.75.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
-    "eslint": "^8.57.0",
-    "typescript": "^5.0.0",
     "@vscode/test-electron": "^2.4.0",
     "@vscode/vsce": "^3.7.1",
-    "ts-node": "^10.9.2"
+    "eslint": "^8.57.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
   }
 }
