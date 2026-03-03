@@ -46,12 +46,12 @@ const discovery_1 = require("../utils/discovery");
 async function configureIterations(context) {
     const currentIterations = context.workspaceState.get("ralph.lastMaxIterations") ?? 50;
     const result = await vscode.window.showInputBox({
-        prompt: "Enter maximum iterations per loop",
+        prompt: vscode.l10n.t("Enter maximum iterations per loop"),
         value: currentIterations.toString(),
         validateInput: (value) => {
             const num = parseInt(value);
             if (isNaN(num) || num <= 0 || num > 1000) {
-                return "Please enter a number between 1 and 1000";
+                return vscode.l10n.t("Please enter a number between 1 and 1000");
             }
             return null;
         },
@@ -69,7 +69,7 @@ async function setConfigMode(context) {
     const currentMode = context.workspaceState.get("ralph.lastMode") ?? "Fast";
     const sortedModes = [currentMode, ...modes.filter((m) => m !== currentMode)];
     const result = await vscode.window.showQuickPick(sortedModes, {
-        placeHolder: "Select mode",
+        placeHolder: vscode.l10n.t("Select mode"),
     });
     if (result) {
         await context.workspaceState.update("ralph.lastMode", result);
@@ -92,7 +92,7 @@ async function setConfigModel(context) {
         ...models.filter((m) => m !== currentModel),
     ];
     const result = await vscode.window.showQuickPick(sortedModels, {
-        placeHolder: "Select AI model",
+        placeHolder: vscode.l10n.t("Select AI model"),
     });
     if (result) {
         await context.workspaceState.update("ralph.lastModel", result);
@@ -114,9 +114,9 @@ async function setConfigPromptFile(context) {
         }
     }
     const promptFiles = await (0, discovery_1.discoverPromptFiles)(workspaceRoot);
-    const options = ["None (skip prompt)", ...promptFiles];
+    const options = [vscode.l10n.t("None (skip prompt)"), ...promptFiles];
     const result = await vscode.window.showQuickPick(options, {
-        placeHolder: "Select prompt file",
+        placeHolder: vscode.l10n.t("Select prompt file"),
     });
     if (result !== undefined) {
         const file = result.startsWith("None") ? "" : result;
@@ -133,7 +133,7 @@ async function setConfigTaskFile(context) {
         ...taskFileOptions.filter((t) => t !== currentTaskFile),
     ];
     const result = await vscode.window.showQuickPick(sortedOptions, {
-        placeHolder: "Select task file",
+        placeHolder: vscode.l10n.t("Select task file"),
     });
     if (result) {
         const file = result === "None" ? undefined : result;
@@ -146,7 +146,7 @@ async function setConfigProgressFile(context) {
     const currentProgressFile = context.workspaceState.get("ralph.lastProgressFile") ??
         "progress.txt";
     const result = await vscode.window.showInputBox({
-        prompt: "Enter progress file path (relative to workspace root)",
+        prompt: vscode.l10n.t("Enter progress file path (relative to workspace root)"),
         value: currentProgressFile,
         placeHolder: "progress.txt",
     });
@@ -159,12 +159,12 @@ async function setConfigProgressFile(context) {
 async function configureStableThreshold(context) {
     const currentThreshold = context.workspaceState.get("ralph.lastStableThreshold") ?? 7;
     const result = await vscode.window.showInputBox({
-        prompt: "Enter stable threshold (number of stable polls before considering agent done)",
+        prompt: vscode.l10n.t("Enter stable threshold (number of stable polls before considering agent done)"),
         value: currentThreshold.toString(),
         validateInput: (value) => {
             const num = parseInt(value);
             if (isNaN(num) || num < 1 || num > 20) {
-                return "Please enter a number between 1 and 20";
+                return vscode.l10n.t("Please enter a number between 1 and 20");
             }
             return null;
         },

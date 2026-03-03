@@ -15,91 +15,92 @@
   },
   "homepage": "https://github.com/alexj11324/ralph-loop-for-antigravity-modified#readme",
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.83.0"
   },
   "categories": [
     "AI",
     "Chat",
     "Programming Languages"
   ],
+  "l10n": "./l10n",
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "ralph.start",
-        "title": "Start Ralph Loop",
+        "title": "%command.start.title%",
         "category": "Ralph",
         "icon": "$(play)"
       },
       {
         "command": "ralph.stop",
-        "title": "Stop Ralph Loop",
+        "title": "%command.stop.title%",
         "category": "Ralph",
         "icon": "$(debug-stop)"
       },
       {
         "command": "ralph.pause",
-        "title": "Pause/Resume Ralph Loop",
+        "title": "%command.pause.title%",
         "category": "Ralph",
         "icon": "$(debug-pause)"
       },
       {
         "command": "ralph.emergency",
-        "title": "Emergency Stop Ralph Loop",
+        "title": "%command.emergency.title%",
         "category": "Ralph",
         "icon": "$(error)"
       },
       {
         "command": "ralph.selectTaskFile",
-        "title": "Select Task File",
+        "title": "%command.selectTaskFile.title%",
         "category": "Ralph",
         "icon": "$(file)"
       },
       {
         "command": "ralph.configureIterations",
-        "title": "Configure Iterations",
+        "title": "%command.configureIterations.title%",
         "category": "Ralph",
         "icon": "$(settings-gear)"
       },
       {
         "command": "ralph.setConfigMode",
-        "title": "Set Mode",
+        "title": "%command.setConfigMode.title%",
         "category": "Ralph"
       },
       {
         "command": "ralph.setConfigModel",
-        "title": "Set Model",
+        "title": "%command.setConfigModel.title%",
         "category": "Ralph"
       },
       {
         "command": "ralph.setConfigPromptFile",
-        "title": "Set Prompt File",
+        "title": "%command.setConfigPromptFile.title%",
         "category": "Ralph"
       },
       {
         "command": "ralph.setConfigTaskFile",
-        "title": "Set Task File",
+        "title": "%command.setConfigTaskFile.title%",
         "category": "Ralph"
       },
       {
         "command": "ralph.toggleUseGit",
-        "title": "Toggle Use Git",
+        "title": "%command.toggleUseGit.title%",
         "category": "Ralph"
       },
       {
         "command": "ralph.toggleCreateBranchEverySession",
-        "title": "Toggle Create Branch Every Session",
+        "title": "%command.toggleCreateBranch.title%",
         "category": "Ralph"
       },
       {
         "command": "ralph.reportBug",
-        "title": "Report a Bug",
+        "title": "%command.reportBug.title%",
         "category": "Ralph",
         "icon": "$(bug)"
       },
       {
         "command": "ralph.toggleDebugLogging",
-        "title": "Toggle Debug Logging",
+        "title": "%command.toggleDebugLogging.title%",
         "category": "Ralph",
         "icon": "$(debug)"
       }
@@ -127,7 +128,7 @@
       "activitybar": [
         {
           "id": "ralph-loop-container",
-          "title": "Ralph Loop",
+          "title": "%viewsContainer.title%",
           "icon": "resources/icons/logo.svg"
         }
       ]
@@ -136,25 +137,25 @@
       "ralph-loop-container": [
         {
           "id": "ralphLoopView",
-          "name": "Ralph Loop",
+          "name": "%view.ralphLoop.name%",
           "icon": "resources/icons/logo.svg"
         },
         {
           "id": "ralphHelpView",
-          "name": "Help & Feedback",
+          "name": "%view.help.name%",
           "icon": "resources/icons/logo.svg"
         }
       ]
     },
     "configuration": {
-      "title": "Ralph Loop",
+      "title": "%config.title%",
       "properties": {
         "ralphLoop.maxIterations": {
           "type": "integer",
           "default": 50,
           "minimum": 1,
           "maximum": 1000,
-          "description": "Default maximum number of iterations for Ralph Loop"
+          "description": "%config.maxIterations.desc%"
         },
         "ralphLoop.defaultMode": {
           "type": "string",
@@ -163,7 +164,7 @@
             "Planning"
           ],
           "default": "Fast",
-          "description": "Default mode for Ralph Loop sessions"
+          "description": "%config.defaultMode.desc%"
         },
         "ralphLoop.defaultModel": {
           "type": "string",
@@ -176,37 +177,37 @@
             "GPT-OSS 120B (Medium)"
           ],
           "default": "Gemini 3 Flash",
-          "description": "Default AI model for Ralph Loop sessions"
+          "description": "%config.defaultModel.desc%"
         },
         "ralphLoop.promptFile": {
           "type": "string",
           "default": "",
-          "description": "Optional prompt file name (e.g., PROMPT.md). Leave empty to skip prompt injection."
+          "description": "%config.promptFile.desc%"
         },
         "ralphLoop.taskFile": {
           "type": "string",
           "default": "PRD.md",
-          "description": "Default task file for tracking progress (e.g., PRD.md, TASKS.md)"
+          "description": "%config.taskFile.desc%"
         },
         "ralphLoop.testCommand": {
           "type": "string",
           "default": "npm run test",
-          "description": "Command to run tests for backpressure validation"
+          "description": "%config.testCommand.desc%"
         },
         "ralphLoop.lintCommand": {
           "type": "string",
           "default": "npm run lint",
-          "description": "Command to run linter for backpressure validation"
+          "description": "%config.lintCommand.desc%"
         },
         "ralphLoop.buildCommand": {
           "type": "string",
           "default": "npm run build",
-          "description": "Command to run build for backpressure validation"
+          "description": "%config.buildCommand.desc%"
         },
         "ralphLoop.packageCommand": {
           "type": "string",
           "default": "",
-          "description": "Command to run packaging (e.g., vsce package) for backpressure validation"
+          "description": "%config.packageCommand.desc%"
         },
         "ralphLoop.enabledBackpressure": {
           "type": "array",
@@ -224,59 +225,59 @@
             "lint",
             "build"
           ],
-          "description": "Which backpressure commands to run after each iteration"
+          "description": "%config.enabledBackpressure.desc%"
         },
         "ralphLoop.notifications.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable notifications for loop completion and errors"
+          "description": "%config.notifications.enabled.desc%"
         },
         "ralphLoop.notifications.onCompletion": {
           "type": "boolean",
           "default": true,
-          "description": "Show notification when Ralph Loop completes successfully"
+          "description": "%config.notifications.onCompletion.desc%"
         },
         "ralphLoop.notifications.onError": {
           "type": "boolean",
           "default": true,
-          "description": "Show notification when Ralph Loop encounters an error"
+          "description": "%config.notifications.onError.desc%"
         },
         "ralphLoop.notifications.onStop": {
           "type": "boolean",
           "default": true,
-          "description": "Show notification when Ralph Loop is stopped"
+          "description": "%config.notifications.onStop.desc%"
         },
         "ralphLoop.notifications.showProgressModal": {
           "type": "boolean",
           "default": false,
-          "description": "Show modal progress notifications (more intrusive but ensures visibility)"
+          "description": "%config.notifications.showProgressModal.desc%"
         },
         "ralphLoop.notifications.includeStats": {
           "type": "boolean",
           "default": true,
-          "description": "Include iteration count and elapsed time in completion notifications"
+          "description": "%config.notifications.includeStats.desc%"
         },
         "ralphLoop.antigravity.port": {
           "type": "integer",
           "default": 0,
           "minimum": 0,
           "maximum": 65535,
-          "description": "Antigravity local server port. Set to 0 for auto-discovery."
+          "description": "%config.port.desc%"
         },
         "ralphLoop.antigravity.csrfToken": {
           "type": "string",
           "default": "",
-          "description": "CSRF token from Antigravity DevTools Network tab (x-codeium-csrf-token header)"
+          "description": "%config.csrfToken.desc%"
         },
         "ralphLoop.antigravity.oauthToken": {
           "type": "string",
           "default": "",
-          "description": "OAuth token (ya29.xxx). Leave empty to attempt automatic extraction."
+          "description": "%config.oauthToken.desc%"
         },
         "ralphLoop.debugLogging": {
           "type": "boolean",
           "default": false,
-          "description": "Enable verbose debug logging in the Ralph Loop output channel"
+          "description": "%config.debugLogging.desc%"
         }
       }
     }

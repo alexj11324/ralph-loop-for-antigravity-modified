@@ -1,22 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = { enumerable: true, get: function () { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -67,14 +67,14 @@ class RalphLoopProvider {
     }
     getRootItems() {
         if (state.hostBlocked) {
-            const warningItem = new RalphLoopItem("host-blocked", "Not Antigravity", "Ralph Loop is disabled in this IDE", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("warning"));
+            const warningItem = new RalphLoopItem("host-blocked", vscode.l10n.t("Not Antigravity"), vscode.l10n.t("Ralph Loop is disabled in this IDE"), vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("warning"));
             return [warningItem];
         }
         return [
-            new RalphLoopItem("session", "Session", this.currentSession
-                ? `Status: ${this.currentSession.status}`
-                : "No active session", vscode.TreeItemCollapsibleState.Expanded, new vscode.ThemeIcon("play-circle")),
-            new RalphLoopItem("configuration", "Configuration", "Settings for next loop", vscode.TreeItemCollapsibleState.Expanded, new vscode.ThemeIcon("settings-gear")),
+            new RalphLoopItem("session", vscode.l10n.t("Session"), this.currentSession
+                ? vscode.l10n.t("Status: {0}", this.currentSession.status)
+                : vscode.l10n.t("No active session"), vscode.TreeItemCollapsibleState.Expanded, new vscode.ThemeIcon("play-circle")),
+            new RalphLoopItem("configuration", vscode.l10n.t("Configuration"), vscode.l10n.t("Settings for next loop"), vscode.TreeItemCollapsibleState.Expanded, new vscode.ThemeIcon("settings-gear")),
         ];
     }
     getConfigItems() {
@@ -95,17 +95,17 @@ class RalphLoopProvider {
         const stableThreshold = workspaceState.get("ralph.lastStableThreshold") ??
             config.get("stableThreshold", 7);
         const items = [
-            new RalphLoopItem("config-mode", "Mode", mode, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("symbol-method")),
-            new RalphLoopItem("config-model", "Model", model, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("hubot")),
-            new RalphLoopItem("config-iterations", "Max Iterations", maxIterations.toString(), vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("sync")),
-            new RalphLoopItem("config-prompt", "Prompt File", promptFile || "None", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("file-code")),
-            new RalphLoopItem("config-task", "Task File", taskFile || "None", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("list-unordered")),
-            new RalphLoopItem("config-progress", "Progress File", progressFile || "progress.txt", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("output")),
-            new RalphLoopItem("config-stable-threshold", "Stable Threshold", `${stableThreshold} (${stableThreshold * 2}s)`, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("clock")),
+            new RalphLoopItem("config-mode", vscode.l10n.t("Mode"), mode, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("symbol-method")),
+            new RalphLoopItem("config-model", vscode.l10n.t("Model"), model, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("hubot")),
+            new RalphLoopItem("config-iterations", vscode.l10n.t("Max Iterations"), maxIterations.toString(), vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("sync")),
+            new RalphLoopItem("config-prompt", vscode.l10n.t("Prompt File"), promptFile || "None", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("file-code")),
+            new RalphLoopItem("config-task", vscode.l10n.t("Task File"), taskFile || "None", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("list-unordered")),
+            new RalphLoopItem("config-progress", vscode.l10n.t("Progress File"), progressFile || "progress.txt", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("output")),
+            new RalphLoopItem("config-stable-threshold", vscode.l10n.t("Stable Threshold"), `${stableThreshold} (${stableThreshold * 2}s)`, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("clock")),
         ];
         // Add Pseudo Ralph checkbox
         const pseudoRalphEnabled = workspaceState.get("ralph.pseudoRalphMode", false);
-        const pseudoRalphItem = new RalphLoopItem("config-pseudo-ralph", "Pseudo Ralph", "Reuse same cascade across iterations", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("link"));
+        const pseudoRalphItem = new RalphLoopItem("config-pseudo-ralph", vscode.l10n.t("Pseudo Ralph"), vscode.l10n.t("Reuse same cascade across iterations"), vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("link"));
         pseudoRalphItem.checkboxState = pseudoRalphEnabled
             ? vscode.TreeItemCheckboxState.Checked
             : vscode.TreeItemCheckboxState.Unchecked;
@@ -113,14 +113,14 @@ class RalphLoopProvider {
         // Add Git settings checkboxes
         const useGit = workspaceState.get("ralph.useGit", true);
         const createBranchEverySession = workspaceState.get("ralph.createBranchEverySession", true);
-        const useGitItem = new RalphLoopItem("config-use-git", "Use Git", "Enable git integration (commit instructions and branch creation)", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("source-control"));
+        const useGitItem = new RalphLoopItem("config-use-git", vscode.l10n.t("Use Git"), vscode.l10n.t("Enable git integration (commit instructions and branch creation)"), vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("source-control"));
         useGitItem.checkboxState = useGit
             ? vscode.TreeItemCheckboxState.Checked
             : vscode.TreeItemCheckboxState.Unchecked;
         items.push(useGitItem);
         // Create new branch every session - disabled when Use Git is off
         if (useGit) {
-            const createBranchItem = new RalphLoopItem("config-create-branch-every-session", "Create new branch every session", "Create and switch to a new branch when starting a loop", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("git-branch"));
+            const createBranchItem = new RalphLoopItem("config-create-branch-every-session", vscode.l10n.t("Create new branch every session"), vscode.l10n.t("Create and switch to a new branch when starting a loop"), vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("git-branch"));
             createBranchItem.checkboxState = createBranchEverySession
                 ? vscode.TreeItemCheckboxState.Checked
                 : vscode.TreeItemCheckboxState.Unchecked;
@@ -128,7 +128,7 @@ class RalphLoopProvider {
         }
         else {
             // Show as disabled when Use Git is off
-            const createBranchItem = new RalphLoopItem("config-create-branch-every-session", "Create new branch every session", "Disabled — enable Use Git", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("circle-slash"));
+            const createBranchItem = new RalphLoopItem("config-create-branch-every-session", vscode.l10n.t("Create new branch every session"), vscode.l10n.t("Disabled — enable Use Git"), vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("circle-slash"));
             // No checkboxState = disabled/unchecked appearance
             items.push(createBranchItem);
         }
@@ -185,23 +185,23 @@ class RalphLoopProvider {
     getSessionItems() {
         if (!this.currentSession) {
             return [
-                new RalphLoopItem("no-session", "No active session", "", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("circle-outline")),
+                new RalphLoopItem("no-session", vscode.l10n.t("No active session"), "", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("circle-outline")),
             ];
         }
         const items = [
-            new RalphLoopItem("status", "Status", this.currentSession.status, vscode.TreeItemCollapsibleState.None, this.currentSession.status === "running"
+            new RalphLoopItem("status", vscode.l10n.t("Status"), this.currentSession.status, vscode.TreeItemCollapsibleState.None, this.currentSession.status === "running"
                 ? new vscode.ThemeIcon("play-circle")
                 : this.currentSession.status === "paused"
                     ? new vscode.ThemeIcon("debug-pause")
                     : new vscode.ThemeIcon("circle-outline")),
-            new RalphLoopItem("mode", "Mode", this.currentSession.mode, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("symbol-method")),
-            new RalphLoopItem("model", "Model", this.currentSession.model, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("hubot")),
-            new RalphLoopItem("iterations", "Iterations", `${this.currentSession.currentIteration}/${this.currentSession.maxIterations}`, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("sync")),
+            new RalphLoopItem("mode", vscode.l10n.t("Mode"), this.currentSession.mode, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("symbol-method")),
+            new RalphLoopItem("model", vscode.l10n.t("Model"), this.currentSession.model, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("hubot")),
+            new RalphLoopItem("iterations", vscode.l10n.t("Iterations"), `${this.currentSession.currentIteration}/${this.currentSession.maxIterations}`, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("sync")),
         ];
         if (this.currentSession.startTime) {
             const elapsed = new Date().getTime() - this.currentSession.startTime.getTime();
             const elapsedStr = this.formatElapsedTime(elapsed);
-            items.push(new RalphLoopItem("elapsed", "Elapsed Time", elapsedStr, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("clock")));
+            items.push(new RalphLoopItem("elapsed", vscode.l10n.t("Elapsed Time"), elapsedStr, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("clock")));
         }
         return items;
     }
