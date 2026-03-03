@@ -69,7 +69,7 @@ async function execCommand(command, options = {}) {
     debugLog(`Executing command: ${cmdName}`);
     debugLog(`Full command`, command);
     try {
-        const { stdout } = await execAsync(command, {
+        const { stdout, stderr } = await execAsync(command, {
             encoding: "utf8",
             maxBuffer: 10 * 1024 * 1024,
             ...options,
@@ -84,8 +84,18 @@ async function execCommand(command, options = {}) {
             else {
                 debugLog(`Output preview (first 10 lines)`, lines.slice(0, 10).join("\n") + "\n...");
             }
+            if (stderr && stderr.length > 0) {
+                const errLines = stderr.split("\n");
+                debugLog(`Command stderr (${errLines.length} lines, ${stderr.length} chars)`);
+                if (errLines.length <= 5) {
+                    debugLog(`Stderr preview`, stderr);
+                }
+                else {
+                    debugLog(`Stderr preview (first 5 lines)`, errLines.slice(0, 5).join("\n") + "\n...");
+                }
+            }
         }
-        return { output: output, error: null };
+        return { output: output, stderr: stderr || "", error: null };
     }
     catch (err) {
         const error = err;
@@ -94,7 +104,7 @@ async function execCommand(command, options = {}) {
             stderr: error.stderr?.slice(0, 500),
             stdout: error.stdout?.slice(0, 500),
         });
-        return { output: null, error };
+        return { output: null, stderr: error.stderr || "", error };
     }
 }
 function pathToWorkspaceId(filePath) {
