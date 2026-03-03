@@ -363,7 +363,7 @@ async function extractOAuthToken() {
     for (const dbPath of possiblePaths) {
         try {
             if (fs.existsSync(dbPath)) {
-                const content = fs.readFileSync(dbPath);
+                const content = await fs.promises.readFile(dbPath);
                 const contentStr = content.toString("utf8");
                 const tokenMatch = contentStr.match(/ya29\.[A-Za-z0-9_-]{50,}/);
                 if (tokenMatch) {
