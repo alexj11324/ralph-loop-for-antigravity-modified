@@ -224,7 +224,7 @@ The extension opens your task/prompt file before starting to ensure the agent wo
 
 ## License
 
-MIT - Original copyright © 2026 [Abhishek Bhakat](https://github.com/abhishekbhakat). Fork maintained by [alexj11324](https://github.com/alexj11324/ralph-loop-for-antigravity-modified).
+MIT - Original copyright © 2026 [Abhishek Bhakat](https://github.com/abhishekbhakat). Fork maintained by [alexj11324](https://github.com/alexj11324).
 
 ---
 
