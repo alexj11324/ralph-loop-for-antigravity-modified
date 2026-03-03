@@ -1,22 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = { enumerable: true, get: function () { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -49,16 +49,21 @@ async function discoverPromptFiles(workspaceRoot) {
             "PROMPT.txt",
             "prompt.txt",
         ];
-        for (const fileName of commonPromptFiles) {
-            const fileUri = vscode.Uri.file(`${workspaceRoot}/${fileName}`);
-            try {
-                await vscode.workspace.fs.stat(fileUri);
-                promptFiles.push(fileName);
-            }
-            catch {
-                continue;
-            }
-        }
+        const promptExistsResults = await Promise.all(
+            commonPromptFiles.map(async (fileName) => {
+                const fileUri = vscode.Uri.file(`${workspaceRoot}/${fileName}`);
+                try {
+                    await vscode.workspace.fs.stat(fileUri);
+                    return true;
+                }
+                catch {
+                    return false;
+                }
+            })
+        );
+        commonPromptFiles.forEach((fileName, i) => {
+            if (promptExistsResults[i]) promptFiles.push(fileName);
+        });
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
             if (!promptFiles.includes(relativePath)) {
@@ -78,16 +83,21 @@ async function discoverTaskFiles(workspaceRoot) {
     try {
         // Look for common task file patterns
         const patterns = ["PRD.md", "TASKS.md", "TODO.md", "task.md", "tasks.md"];
-        for (const pattern of patterns) {
-            const fileUri = vscode.Uri.file(`${workspaceRoot}/${pattern}`);
-            try {
-                await vscode.workspace.fs.stat(fileUri);
-                taskFiles.push(pattern);
-            }
-            catch {
-                continue;
-            }
-        }
+        const taskExistsResults = await Promise.all(
+            patterns.map(async (pattern) => {
+                const fileUri = vscode.Uri.file(`${workspaceRoot}/${pattern}`);
+                try {
+                    await vscode.workspace.fs.stat(fileUri);
+                    return true;
+                }
+                catch {
+                    return false;
+                }
+            })
+        );
+        patterns.forEach((pattern, i) => {
+            if (taskExistsResults[i]) taskFiles.push(pattern);
+        });
         // Also search for any markdown file with TASK or PRD in the name
         const pattern = new vscode.RelativePattern(workspaceRoot, "**/{*TASK*,*PRD*}.md");
         const files = await vscode.workspace.findFiles(pattern);
