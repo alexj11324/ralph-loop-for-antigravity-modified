@@ -105,17 +105,17 @@ async function runRalphLoopIteration(config, context) {
             state.progressLogger?.streamSection(`Iteration ${state.currentIteration}/${state.maxIterations}`);
         }
         state.progressLogger?.streamProgress("Starting", 1, 5, "Initializing iteration");
-        const agentContext = await (0, agentRunner_1.spawnFreshAgentContext)(config);
-        const session = {
-            status: "running",
-            mode: config.mode,
-            model: config.model,
-            currentIteration: state.currentIteration,
-            maxIterations: state.maxIterations,
-            startTime: state.startTime,
-        };
-        state.ralphLoopProvider.updateSession(session);
         try {
+            const agentContext = await (0, agentRunner_1.spawnFreshAgentContext)(config);
+            const session = {
+                status: "running",
+                mode: config.mode,
+                model: config.model,
+                currentIteration: state.currentIteration,
+                maxIterations: state.maxIterations,
+                startTime: state.startTime,
+            };
+            state.ralphLoopProvider.updateSession(session);
             await (0, agentRunner_1.processIterationWithFreshContext)(agentContext, config, context);
         }
         catch (error) {
@@ -125,8 +125,8 @@ async function runRalphLoopIteration(config, context) {
                 state.progressLogger?.warn("Stopped due to user request", "Iteration");
                 break;
             }
-            // Check if this is a connection error (server crash/restart/session destroyed)
-            const isConnectionError = /ECONNREFUSED|ECONNRESET|EPIPE|Connection timeout|connection.*closed|server.*closed|Not connected|session.*destroyed|ERR_HTTP2|INVALID_SESSION|GOAWAY/i.test(errorMessage);
+            // Check if this is a connection error (server crash/restart/session destroyed/cascade failed)
+            const isConnectionError = /ECONNREFUSED|ECONNRESET|EPIPE|Connection timeout|connection.*closed|server.*closed|Not connected|session.*destroyed|ERR_HTTP2|INVALID_SESSION|GOAWAY|[Cc]ascade.*start|[Cc]ould not start|crashed unexpectedly/i.test(errorMessage);
             if (isConnectionError) {
                 // Track reconnect attempts for this iteration
                 if (!config._reconnectAttempts) config._reconnectAttempts = 0;
