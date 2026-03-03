@@ -49,16 +49,18 @@ async function discoverPromptFiles(workspaceRoot) {
             "PROMPT.txt",
             "prompt.txt",
         ];
-        for (const fileName of commonPromptFiles) {
-            const fileUri = vscode.Uri.file(`${workspaceRoot}/${fileName}`);
-            try {
-                await vscode.workspace.fs.stat(fileUri);
-                promptFiles.push(fileName);
-            }
-            catch {
-                continue;
-            }
-        }
+        await Promise.all(
+            commonPromptFiles.map(async (fileName) => {
+                const fileUri = vscode.Uri.file(`${workspaceRoot}/${fileName}`);
+                try {
+                    await vscode.workspace.fs.stat(fileUri);
+                    promptFiles.push(fileName);
+                }
+                catch {
+                    // Ignore missing files
+                }
+            })
+        );
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
             if (!promptFiles.includes(relativePath)) {
@@ -78,16 +80,18 @@ async function discoverTaskFiles(workspaceRoot) {
     try {
         // Look for common task file patterns
         const patterns = ["PRD.md", "TASKS.md", "TODO.md", "task.md", "tasks.md"];
-        for (const pattern of patterns) {
-            const fileUri = vscode.Uri.file(`${workspaceRoot}/${pattern}`);
-            try {
-                await vscode.workspace.fs.stat(fileUri);
-                taskFiles.push(pattern);
-            }
-            catch {
-                continue;
-            }
-        }
+        await Promise.all(
+            patterns.map(async (pattern) => {
+                const fileUri = vscode.Uri.file(`${workspaceRoot}/${pattern}`);
+                try {
+                    await vscode.workspace.fs.stat(fileUri);
+                    taskFiles.push(pattern);
+                }
+                catch {
+                    // Ignore missing files
+                }
+            })
+        );
         // Also search for any markdown file with TASK or PRD in the name
         const pattern = new vscode.RelativePattern(workspaceRoot, "**/{*TASK*,*PRD*}.md");
         const files = await vscode.workspace.findFiles(pattern);
