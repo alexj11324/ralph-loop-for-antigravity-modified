@@ -113,8 +113,8 @@ async function runRalphLoopIteration(config, context) {
                 state.progressLogger?.warn("Stopped due to user request", "Iteration");
                 break;
             }
-            // Check if this is a connection error (server crash/restart)
-            const isConnectionError = /ECONNREFUSED|ECONNRESET|Connection timeout|connection.*closed|server.*closed|Not connected/i.test(errorMessage);
+            // Check if this is a connection error (server crash/restart/session destroyed)
+            const isConnectionError = /ECONNREFUSED|ECONNRESET|EPIPE|Connection timeout|connection.*closed|server.*closed|Not connected|session.*destroyed|ERR_HTTP2|INVALID_SESSION|GOAWAY/i.test(errorMessage);
             if (isConnectionError) {
                 // Track reconnect attempts for this iteration
                 if (!config._reconnectAttempts) config._reconnectAttempts = 0;
