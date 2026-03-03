@@ -3,8 +3,11 @@
 > **Fork Notice**: This is a fork of [Ralph Loop for Antigravity](https://github.com/abhishekbhakat/ralph-loop-for-antigravity) by [Abhishek Bhakat](https://github.com/abhishekbhakat), released under the MIT License.
 >
 > **Key improvements in this fork:**
-> - Added support for the latest models available in Antigravity: Claude Sonnet 4.6 (Thinking), Claude Opus 4.6 (Thinking), Gemini 3.1 Pro (High/Low), GPT-OSS 120B
-> - Updated API integration for Antigravity v1.107+ (JSON-based REST API)
+> - 🌐 **Chinese language support** (简体中文) — UI, commands, and configuration descriptions
+> - 🔄 **Auto-reconnect with breakpoint resume** (断点续跑) — automatically recovers from Antigravity server crashes with exponential backoff (up to 5 retries, 15s–120s delays)
+> - 💾 **Settings persistence** — remembers your last used model, mode, prompt file, and other settings across sessions
+> - 🤖 **Latest model support**: Claude Sonnet 4.6 (Thinking), Claude Opus 4.6 (Thinking), Gemini 3.1 Pro (High/Low), GPT-OSS 120B
+> - ⚡ **Updated API integration** for Antigravity v1.107+ (JSON-based REST API)
 
 A VSCode extension that brings the Ralph Loop autonomous AI agent methodology to Antigravity.
 
@@ -88,6 +91,24 @@ The agent appends entries to track completion. This is how it knows which tasks 
 
 ## Features
 
+### 🌐 Chinese Language Support (简体中文)
+
+All UI elements, commands, and configuration descriptions are fully translated to Simplified Chinese. The extension automatically adapts when VS Code is set to Chinese locale.
+
+### 🔄 Auto-Reconnect & Breakpoint Resume (断点续跑)
+
+When the Antigravity server crashes or restarts mid-iteration:
+
+- **Automatic detection** of connection errors (ECONNREFUSED, HTTP/2 session destroyed, etc.)
+- **Exponential backoff**: waits 15s → 30s → 60s → 120s → 120s (up to 5 retries, ~6 minutes total)
+- **Visual progress notification** with countdown timer (cancellable)
+- **Breakpoint resume**: retries the failed iteration without losing progress
+- Clear `═══ 断点续跑 ═══` markers in the output log
+
+### 💾 Settings Persistence
+
+Your session configuration (model, mode, max iterations, prompt file, etc.) is automatically saved to workspace state and restored when you reopen the project.
+
 ### Activity Bar & Sidebar
 
 Ralph Loop has a dedicated Activity Bar icon. The sidebar shows:
@@ -116,6 +137,7 @@ The **Ralph Loop** output channel provides:
 - Streaming agent responses
 - Iteration markers and phase tracking
 - Progress indicators
+- Reconnection status and breakpoint resume logs
 
 ## Commands
 
@@ -196,7 +218,7 @@ The extension opens your task/prompt file before starting to ensure the agent wo
 
 ## Requirements
 
-- VS Code 1.75.0 or later
+- VS Code 1.83.0 or later
 - Antigravity in agent driven mode
 - A workspace folder with task files
 
