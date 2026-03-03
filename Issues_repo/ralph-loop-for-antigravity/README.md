@@ -61,11 +61,30 @@ Use `Ralph: Emergency Stop Ralph Loop` from the Command Palette (Cmd/Ctrl+Shift+
 ### Token extraction failing
 Ensure Antigravity is running. If auto-discovery fails, manually configure the CSRF token and port in settings.
 
+## Fork 改进 (alexj11324/ralph-loop-for-antigravity-modified)
+
+本仓库基于 [原始项目](https://github.com/abhishekbhakat/ralph-loop-for-antigravity) 进行了以下改进：
+
+### 🔒 安全修复
+- **命令注入防护**: `execCommand` 使用 `execFileAsync` + 显式参数数组替代 shell 字符串拼接，防止命令注入攻击
+- **Git 命令注入修复**: 修复了 Git 操作中的潜在注入风险
+
+### ⚡ 性能优化
+- **并行文件发现**: `discoverPromptFiles` 和 `discoverTaskFiles` 使用 `Promise.all` 并行检查文件存在性，保持原始顺序
+- **异步 OAuth Token 提取**: `extractOAuthToken` 改为纯异步操作，消除 `existsSync` 的 TOCTOU 竞态条件
+- **异步进程发现**: 所有进程发现命令改为异步执行，带 stderr 暴露
+- **Windows 版本缓存**: `getWindowsVersion` 结果缓存，避免重复子进程调用
+
+### 🛠 代码质量
+- **Stderr 规范化**: 统一 stderr 处理为一致的字符串类型
+- **模型支持更新**: 支持 Gemini 3.1 Pro 和 Claude 4.6 Opus
+
 ## Links
 
-- [Extension Repository](https://github.com/abhishekbhakat/ralph-loop-for-antigravity)
-- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=abhishekbhakat.ralph-loop-for-antigravity)
-- [Open VSX Registry](https://open-vsx.org/extension/abhishekbhakat/ralph-loop-for-antigravity)
+- [原始项目](https://github.com/abhishekbhakat/ralph-loop-for-antigravity)
+- [本 Fork](https://github.com/alexj11324/ralph-loop-for-antigravity-modified)
+- [VS Code Marketplace (原始)](https://marketplace.visualstudio.com/items?itemName=abhishekbhakat.ralph-loop-for-antigravity)
+- [Open VSX Registry (原始)](https://open-vsx.org/extension/abhishekbhakat/ralph-loop-for-antigravity)
 
 ## License
 
