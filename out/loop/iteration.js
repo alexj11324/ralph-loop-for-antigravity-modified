@@ -91,7 +91,19 @@ async function runRalphLoopIteration(config, context) {
         }
         state.incrementIteration();
         state.progressLogger?.setIteration(state.currentIteration, state.maxIterations);
-        state.progressLogger?.streamSection(`Iteration ${state.currentIteration}/${state.maxIterations}`);
+        // Check if this iteration is a reconnect-resume
+        if (config._reconnectAttempts && config._reconnectAttempts > 0) {
+            state.progressLogger?.streamSection(`✅ 断点续跑成功 — 恢复迭代 ${state.currentIteration}/${state.maxIterations}`);
+            state.progressLogger?.info(
+                `重连成功！从迭代 ${state.currentIteration} 继续执行（经过 ${config._reconnectAttempts} 次重连尝试）`,
+                "Reconnect"
+            );
+            vscode.window.setStatusBarMessage(`✅ Ralph Loop: 断点续跑成功 — 迭代 ${state.currentIteration}`, 10000);
+            config._reconnectAttempts = 0; // Reset after successful resume
+        }
+        else {
+            state.progressLogger?.streamSection(`Iteration ${state.currentIteration}/${state.maxIterations}`);
+        }
         state.progressLogger?.streamProgress("Starting", 1, 5, "Initializing iteration");
         const agentContext = await (0, agentRunner_1.spawnFreshAgentContext)(config);
         const session = {
@@ -157,9 +169,15 @@ async function runRalphLoopIteration(config, context) {
                     if (state.stopRequested) break;
                     // Roll back iteration counter so this iteration is retried
                     state.decrementIteration();
+                    const resumeIteration = state.currentIteration + 1;
+                    state.progressLogger?.streamSection("═══ 断点续跑 (Resume from Breakpoint) ═══");
+                    state.progressLogger?.info(
+                        `🔄 将从迭代 ${resumeIteration}/${state.maxIterations} 开始断点续跑 (重连尝试 ${config._reconnectAttempts}/${maxReconnectAttempts})`,
+                        "Reconnect"
+                    );
                     state.progressLogger?.info("Attempting to reconnect to Antigravity server...", "Reconnect");
                     // Show reconnecting notification
-                    vscode.window.setStatusBarMessage("$(sync~spin) Ralph Loop: 正在重新连接...", 10000);
+                    vscode.window.setStatusBarMessage(`$(sync~spin) Ralph Loop: 断点续跑 — 正在重连，将恢复迭代 ${resumeIteration}...`, 15000);
                     continue; // Retry this iteration
                 }
                 else {
