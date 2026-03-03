@@ -1,22 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = { enumerable: true, get: function () { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -44,6 +44,7 @@ const path = __importStar(require("path"));
 const os = __importStar(require("os"));
 const state = __importStar(require("../state"));
 const child_process_1 = require("child_process");
+const execFileSync = child_process_1.execFileSync;
 const protobuf_1 = require("./protobuf");
 const isWindows = process.platform === "win32";
 function isDebugLoggingEnabled() {
@@ -62,16 +63,21 @@ function debugLog(message, data) {
         state.outputChannel.appendLine(fullMessage);
     }
 }
-function execCommand(command, options = {}) {
-    const cmdName = options.commandName || command.slice(0, 50);
+function execCommand(commandOrFile, args = [], options = {}) {
+    const hasArgs = args.length > 0;
+    const cmdNameBase = hasArgs ? `${commandOrFile} ${args.join(" ")}` : commandOrFile;
+    const cmdName = (options.commandName || cmdNameBase).slice(0, 50);
     debugLog(`Executing command: ${cmdName}`);
-    debugLog(`Full command`, command);
+    debugLog(`Full command`, hasArgs ? [commandOrFile, ...args] : commandOrFile);
     try {
-        const output = (0, child_process_1.execSync)(command, {
+        const execOptions = {
             encoding: "utf8",
             maxBuffer: 10 * 1024 * 1024,
             ...options,
-        });
+        };
+        const output = hasArgs
+            ? execFileSync(commandOrFile, args, execOptions)
+            : (0, child_process_1.execSync)(commandOrFile, execOptions);
         if (isDebugLoggingEnabled()) {
             const lines = output.split("\n");
             debugLog(`Command stdout (${lines.length} lines, ${output.length} chars)`);
@@ -169,7 +175,7 @@ function extractAntigravityFromProcessWindows(workspacePath) {
     else {
         debugLog("Using JSON-based process enumeration for Windows 11+");
         const psCommand = 'powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Select-Object ProcessId, CommandLine | ConvertTo-Json -Compress"';
-        const result = execCommand(psCommand, {
+        const result = execCommand(psCommand, [], {
             commandName: "Get-CimInstance Win32_Process",
         });
         if (result.error || !result.output) {
@@ -255,7 +261,7 @@ function getProcessesLegacy() {
     // Use WMIC instead of PowerShell ConvertTo-Csv to avoid .NET Framework dependencies
     // WMIC is deprecated but still available on Windows 10 and doesn't use System.Web
     const wmicCommand = "wmic process get ProcessId,CommandLine /format:csv";
-    const result = execCommand(wmicCommand, {
+    const result = execCommand(wmicCommand, [], {
         commandName: "wmic process",
     });
     if (result.error || !result.output) {
@@ -296,7 +302,7 @@ function getProcessesLegacy() {
 }
 function extractAntigravityFromProcessUnix(workspacePath) {
     const psCommand = "ps -ax -o pid=,command=";
-    const result = execCommand(psCommand, { commandName: "ps -ax" });
+    const result = execCommand(psCommand, [], { commandName: "ps -ax" });
     if (result.error || !result.output) {
         debugLog("Unix ps command failed", result.error?.message);
         return null;
@@ -412,7 +418,7 @@ function getListeningPortsWindows(pid) {
     debugLog(`Looking for listening ports on Windows for PID=${pid}`);
     const ports = [];
     const netstatCommand = "netstat -ano";
-    const result = execCommand(netstatCommand, { commandName: "netstat -ano" });
+    const result = execCommand(netstatCommand, [], { commandName: "netstat -ano" });
     if (result.error || !result.output) {
         debugLog("netstat command failed", result.error?.message);
         return ports;
@@ -450,8 +456,9 @@ function getListeningPortsWindows(pid) {
 function getListeningPortsUnix(pid) {
     debugLog(`Looking for listening ports on Unix for PID=${pid}`);
     const ports = [];
-    const lsofCommand = `lsof -nP -iTCP -sTCP:LISTEN -p ${pid}`;
-    const result = execCommand(lsofCommand, { commandName: `lsof -p ${pid}` });
+    const lsofCommand = "lsof";
+    const lsofArgs = ["-nP", "-iTCP", "-sTCP:LISTEN", "-p", pid.toString()];
+    const result = execCommand(lsofCommand, lsofArgs, { commandName: `lsof -p ${pid}` });
     if (result.error || !result.output) {
         debugLog("lsof command failed", result.error?.message);
         return ports;
