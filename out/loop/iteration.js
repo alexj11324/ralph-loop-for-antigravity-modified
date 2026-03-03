@@ -1,22 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function () { return m[k]; } };
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function (o, m, k, k2) {
+}) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function (o, v) {
+}) : function(o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function (o) {
+    var ownKeys = function(o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -38,7 +38,6 @@ const vscode = __importStar(require("vscode"));
 const state = __importStar(require("../state"));
 const agentRunner_1 = require("./agentRunner");
 const git_1 = require("../utils/git");
-const sharedDecoder = new TextDecoder();
 async function isCompletionMarkerPresent(config) {
     if (!config.progressFile || !config.doneMarker) {
         return false;
@@ -48,10 +47,9 @@ async function isCompletionMarkerPresent(config) {
         const content = await vscode.workspace.fs.readFile(progressUri);
         // Optimize memory and CPU for large progress files by only decoding the end
         // since the done marker is always appended at the end of the file.
-        // Size the tail dynamically to avoid edge cases where the marker straddles the cutoff.
-        const readSize = Math.min(content.length, Math.max(4096, config.doneMarker.length * 4));
+        const readSize = Math.min(content.length, 4096);
         const tailBuffer = content.subarray(content.length - readSize);
-        const tailText = sharedDecoder.decode(tailBuffer);
+        const tailText = new TextDecoder().decode(tailBuffer);
         return tailText.includes(config.doneMarker);
     }
     catch (error) {
