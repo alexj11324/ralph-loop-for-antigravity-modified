@@ -7,10 +7,15 @@ on:
 
 jobs:
   publish:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -23,6 +28,14 @@ jobs:
       - name: Install vsce and ovsx
         run: npm install -g @vscode/vsce ovsx
 
+      - name: Bump patch version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
       - name: Package extension
         run: |
           npm pkg delete scripts.vscode:prepublish
@@ -30,3 +43,9 @@ jobs:
 
       - name: Publish to Open VSX
         run: ovsx publish *.vsix -p ${{ secrets.OPEN_VSX_TOKEN }}
+
+      - name: Push version bump
+        run: |
+          git add package.json
+          git commit -m "chore: bump version to ${{ env.VERSION }} [skip ci]"
+          git push
