@@ -119,11 +119,13 @@ async function runRalphLoopIteration(config, context) {
                 // Track reconnect attempts for this iteration
                 if (!config._reconnectAttempts) config._reconnectAttempts = 0;
                 config._reconnectAttempts++;
-                const maxReconnectAttempts = 3;
+                const maxReconnectAttempts = 5;
                 if (config._reconnectAttempts <= maxReconnectAttempts) {
-                    const delay = 5000 * Math.pow(2, config._reconnectAttempts - 1); // 5s, 10s, 20s
+                    // Longer delays: 15s, 30s, 60s, 120s, 120s (total ~6 min)
+                    const delay = Math.min(15000 * Math.pow(2, config._reconnectAttempts - 1), 120000);
+                    const delaySec = Math.round(delay / 1000);
                     state.progressLogger?.warn(
-                        `Connection lost (attempt ${config._reconnectAttempts}/${maxReconnectAttempts}). Waiting ${delay / 1000}s before reconnecting...`,
+                        `Connection lost (attempt ${config._reconnectAttempts}/${maxReconnectAttempts}). Waiting ${delaySec}s before reconnecting...`,
                         "Reconnect"
                     );
                     // Clear old client
@@ -131,11 +133,33 @@ async function runRalphLoopIteration(config, context) {
                         try { state.antigravityClient.disconnect(); } catch (_) { }
                         state.setAntigravityClient(null);
                     }
-                    // Wait with exponential backoff
-                    await new Promise((r) => setTimeout(r, delay));
+                    // Show visible progress notification to user
+                    await vscode.window.withProgress({
+                        location: vscode.ProgressLocation.Notification,
+                        title: `Ralph Loop: Antigravity 连接断开，${delaySec} 秒后重连 (${config._reconnectAttempts}/${maxReconnectAttempts})...`,
+                        cancellable: true,
+                    }, async (progress, token) => {
+                        const steps = 20;
+                        const stepDelay = delay / steps;
+                        for (let i = 0; i < steps; i++) {
+                            if (token.isCancellationRequested || state.stopRequested) {
+                                state.progressLogger?.warn("Reconnect cancelled by user", "Reconnect");
+                                state.setStopRequested(true);
+                                return;
+                            }
+                            progress.report({
+                                increment: 100 / steps,
+                                message: `等待中... ${Math.round((steps - i) * stepDelay / 1000)}s`,
+                            });
+                            await new Promise((r) => setTimeout(r, stepDelay));
+                        }
+                    });
+                    if (state.stopRequested) break;
                     // Roll back iteration counter so this iteration is retried
                     state.decrementIteration();
                     state.progressLogger?.info("Attempting to reconnect to Antigravity server...", "Reconnect");
+                    // Show reconnecting notification
+                    vscode.window.setStatusBarMessage("$(sync~spin) Ralph Loop: 正在重新连接...", 10000);
                     continue; // Retry this iteration
                 }
                 else {
@@ -143,6 +167,7 @@ async function runRalphLoopIteration(config, context) {
                         `Failed to reconnect after ${maxReconnectAttempts} attempts. Stopping loop.`,
                         "Reconnect"
                     );
+                    vscode.window.showErrorMessage(`Ralph Loop: ${maxReconnectAttempts} 次重连均失败，循环已停止。请重启 Antigravity 后重试。`);
                     config._reconnectAttempts = 0;
                 }
             }
