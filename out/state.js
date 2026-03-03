@@ -48,6 +48,7 @@ exports.setStreamAbortController = setStreamAbortController;
 exports.setPseudoRalphMode = setPseudoRalphMode;
 exports.setPersistentCascadeId = setPersistentCascadeId;
 exports.setHostBlocked = setHostBlocked;
+exports.setExtensionContext = setExtensionContext;
 exports.initializeState = initializeState;
 const vscode = __importStar(require("vscode"));
 const progressLogger_1 = require("./services/progressLogger");
@@ -67,6 +68,7 @@ exports.streamAbortController = null;
 exports.pseudoRalphMode = false;
 exports.persistentCascadeId = null;
 exports.hostBlocked = false;
+exports._extensionContext = null;
 // State setters
 function setRalphLoopStatus(status) {
     exports.ralphLoopStatus = status;
@@ -111,6 +113,9 @@ function setPersistentCascadeId(id) {
 }
 function setHostBlocked(blocked) {
     exports.hostBlocked = blocked;
+}
+function setExtensionContext(ctx) {
+    exports._extensionContext = ctx;
 }
 // Initialization
 function initializeState(channel, provider) {

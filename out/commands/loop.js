@@ -1,22 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = { enumerable: true, get: function () { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -81,11 +81,49 @@ async function startRalphLoop(context) {
         }
         state.setRalphLoopStatus("running");
         vscode.commands.executeCommand("setContext", "ralph.isRunning", true);
-        state.setCurrentIteration(0);
+        // Check if there's a saved iteration from a previous session
+        const lastIteration = context.workspaceState.get("ralph.lastIteration") ?? 0;
+        const lastMaxIterations = context.workspaceState.get("ralph.lastMaxIterations") ?? config.maxIterations;
+        let startFromIteration = 0;
+        if (lastIteration > 0 && lastIteration < lastMaxIterations) {
+            const resumeChoice = await vscode.window.showQuickPick(
+                [
+                    {
+                        label: `$(debug-continue) 断点续跑 — 从迭代 ${lastIteration + 1} 继续`,
+                        description: `上次在迭代 ${lastIteration}/${lastMaxIterations} 中断`,
+                        value: "resume",
+                    },
+                    {
+                        label: "$(debug-restart) 重新开始 — 从迭代 1 开始",
+                        description: "清除上次进度，从头开始",
+                        value: "restart",
+                    },
+                ],
+                { placeHolder: "检测到上次循环中断，是否断点续跑？" }
+            );
+            if (!resumeChoice) {
+                state.setRalphLoopStatus("stopped");
+                vscode.commands.executeCommand("setContext", "ralph.isRunning", false);
+                state.progressLogger?.info("Ralph Loop start cancelled by user", "Loop");
+                return;
+            }
+            if (resumeChoice.value === "resume") {
+                startFromIteration = lastIteration;
+            }
+        }
+        state.setCurrentIteration(startFromIteration);
         state.setMaxIterations(config.maxIterations);
+        state.setExtensionContext(context);
         state.setStartTime(new Date());
-        state.progressLogger?.streamSection("Ralph Loop Started");
-        state.progressLogger?.setIteration(0, state.maxIterations);
+        if (startFromIteration > 0) {
+            state.progressLogger?.streamSection(`═══ 断点续跑 — 从迭代 ${startFromIteration + 1} 继续 ═══`);
+            state.progressLogger?.info(`上次循环在迭代 ${startFromIteration} 中断，现在从迭代 ${startFromIteration + 1} 继续`, "Loop");
+            vscode.window.setStatusBarMessage(`✅ Ralph Loop: 断点续跑 — 从迭代 ${startFromIteration + 1} 开始`, 10000);
+        }
+        else {
+            state.progressLogger?.streamSection("Ralph Loop Started");
+        }
+        state.progressLogger?.setIteration(startFromIteration, state.maxIterations);
         state.progressLogger?.info(`Mode: ${config.mode}`, "Config");
         state.progressLogger?.info(`Model: ${config.model}`, "Config");
         state.progressLogger?.info(`Max Iterations: ${state.maxIterations}`, "Config");
@@ -105,7 +143,7 @@ async function startRalphLoop(context) {
             status: "running",
             mode: config.mode,
             model: config.model,
-            currentIteration: 0,
+            currentIteration: startFromIteration,
             maxIterations: config.maxIterations,
             startTime: state.startTime,
         };
@@ -120,6 +158,9 @@ async function startRalphLoop(context) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         state.progressLogger?.error(`Loop failed to start: ${errorMessage}`, "Loop");
         state.notificationService?.notifyError(errorMessage);
+        // Save current iteration for cross-session resume on crash
+        context.workspaceState.update("ralph.lastIteration", state.currentIteration);
+        context.workspaceState.update("ralph.lastMaxIterations", state.maxIterations);
     }
     finally {
         state.setCurrentLoopPromise(null);
@@ -145,6 +186,12 @@ async function stopRalphLoop() {
     state.setRalphLoopStatus("stopped");
     state.setStopRequested(false);
     vscode.commands.executeCommand("setContext", "ralph.isRunning", false);
+    // Save current iteration for cross-session resume
+    const wsContext = state._extensionContext;
+    if (wsContext) {
+        wsContext.workspaceState.update("ralph.lastIteration", state.currentIteration);
+        wsContext.workspaceState.update("ralph.lastMaxIterations", state.maxIterations);
+    }
     // Clear persistent cascade ID since loop is ending
     state.setPersistentCascadeId(null);
     let elapsedTimeStr = "";
@@ -263,6 +310,12 @@ async function emergencyStopRalphLoop() {
     }
     state.setStopRequested(false);
     state.setCurrentLoopPromise(null);
+    // Save current iteration for cross-session resume
+    const wsContext = state._extensionContext;
+    if (wsContext) {
+        wsContext.workspaceState.update("ralph.lastIteration", state.currentIteration);
+        wsContext.workspaceState.update("ralph.lastMaxIterations", state.maxIterations);
+    }
 }
 async function showQuickActions(context) {
     const items = [
