@@ -41,13 +41,13 @@ const state = __importStar(require("../state"));
 async function discoverPromptFiles(workspaceRoot) {
     const promptFiles = [];
     try {
-        const pattern = new vscode.RelativePattern(workspaceRoot, "**/*PROMPT*.md");
-        const files = await vscode.workspace.findFiles(pattern);
         const commonPromptFiles = [
-            "PROMPT.md",
-            "prompt.md",
-            "PROMPT.txt",
-            "prompt.txt",
+            "PROMPT.md", "prompt.md", "Prompt.md",
+            "PROMPT.txt", "prompt.txt",
+            "INSTRUCTIONS.md", "instructions.md", "Instructions.md",
+            "SYSTEM_PROMPT.md", "system_prompt.md",
+            "AGENT_PROMPT.md", "agent_prompt.md",
+            "CONTEXT.md", "context.md",
         ];
         const promptExistsResults = await Promise.all(
             commonPromptFiles.map(async (fileName) => {
@@ -62,8 +62,14 @@ async function discoverPromptFiles(workspaceRoot) {
             })
         );
         commonPromptFiles.forEach((fileName, i) => {
-            if (promptExistsResults[i]) promptFiles.push(fileName);
+            if (promptExistsResults[i] && !promptFiles.includes(fileName)) promptFiles.push(fileName);
         });
+        // Search for files with PROMPT, INSTRUCTION, CONTEXT in the name
+        const pattern = new vscode.RelativePattern(
+            workspaceRoot,
+            "**/{*PROMPT*,*prompt*,*INSTRUCTION*,*instruction*,*CONTEXT*}.{md,txt}"
+        );
+        const files = await vscode.workspace.findFiles(pattern, "**/node_modules/**", 20);
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
             if (!promptFiles.includes(relativePath)) {
@@ -81,8 +87,20 @@ async function discoverPromptFiles(workspaceRoot) {
 async function discoverTaskFiles(workspaceRoot) {
     const taskFiles = [];
     try {
-        // Look for common task file patterns
-        const patterns = ["PRD.md", "TASKS.md", "TODO.md", "task.md", "tasks.md"];
+        // Look for common task file patterns (case-insensitive via multiple variants)
+        const patterns = [
+            "PRD.md", "prd.md", "Prd.md",
+            "TASKS.md", "tasks.md", "Tasks.md",
+            "TODO.md", "todo.md", "Todo.md",
+            "task.md", "TASK.md",
+            "REQUIREMENTS.md", "requirements.md", "Requirements.md",
+            "SPEC.md", "spec.md", "Spec.md",
+            "BACKLOG.md", "backlog.md", "Backlog.md",
+            "ISSUES.md", "issues.md", "Issues.md",
+            "ROADMAP.md", "roadmap.md", "Roadmap.md",
+            "PLAN.md", "plan.md", "Plan.md",
+            "PRD.txt", "TASKS.txt", "TODO.txt",
+        ];
         const taskExistsResults = await Promise.all(
             patterns.map(async (pattern) => {
                 const fileUri = vscode.Uri.file(`${workspaceRoot}/${pattern}`);
@@ -96,14 +114,18 @@ async function discoverTaskFiles(workspaceRoot) {
             })
         );
         patterns.forEach((pattern, i) => {
-            if (taskExistsResults[i]) taskFiles.push(pattern);
+            if (taskExistsResults[i] && !taskFiles.includes(pattern)) taskFiles.push(pattern);
         });
-        // Also search for any markdown file with TASK or PRD in the name
-        const pattern = new vscode.RelativePattern(workspaceRoot, "**/{*TASK*,*PRD*}.md");
-        const files = await vscode.workspace.findFiles(pattern);
+        // Also search for any file with TASK, PRD, TODO, SPEC, etc. in the name
+        const searchPattern = new vscode.RelativePattern(
+            workspaceRoot,
+            "**/{*TASK*,*PRD*,*TODO*,*SPEC*,*REQUIREMENT*,*BACKLOG*,*ROADMAP*}.{md,txt}"
+        );
+        const files = await vscode.workspace.findFiles(searchPattern, "**/node_modules/**", 20);
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
-            if (!taskFiles.includes(relativePath)) {
+            // Skip files already found and progress/output files
+            if (!taskFiles.includes(relativePath) && !relativePath.includes("progress")) {
                 taskFiles.push(relativePath);
             }
         }

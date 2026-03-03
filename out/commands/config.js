@@ -126,21 +126,64 @@ async function setConfigPromptFile(context) {
     }
 }
 async function setConfigTaskFile(context) {
-    const taskFileOptions = ["PRD.md", "TASKS.md", "None"];
-    const currentTaskFile = context.workspaceState.get("ralph.lastTaskFile") ?? "PRD.md";
-    const sortedOptions = [
-        currentTaskFile,
-        ...taskFileOptions.filter((t) => t !== currentTaskFile),
-    ];
-    const result = await vscode.window.showQuickPick(sortedOptions, {
-        placeHolder: vscode.l10n.t("Select task file"),
-    });
-    if (result) {
-        const file = result === "None" ? undefined : result;
-        await context.workspaceState.update("ralph.lastTaskFile", file ?? "None");
-        state.ralphLoopProvider.refresh();
-        state.progressLogger?.info(`Task file set to ${file || "None"}`, "Config");
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders)
+        return;
+    // Get workspace from active editor, fall back to first workspace
+    let workspaceRoot = workspaceFolders[0].uri.fsPath;
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor) {
+        const activeWorkspace = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
+        if (activeWorkspace) {
+            workspaceRoot = activeWorkspace.uri.fsPath;
+        }
     }
+    const taskFiles = await (0, discovery_1.discoverTaskFiles)(workspaceRoot);
+    const currentTaskFile = context.workspaceState.get("ralph.lastTaskFile") ?? "PRD.md";
+    // Build options: detected files first (with indicator), then manual input option
+    const detectedItems = taskFiles.map((f) => ({
+        label: f === currentTaskFile ? `$(check) ${f}` : f,
+        description: vscode.l10n.t("Detected in workspace"),
+        value: f,
+    }));
+    const manualItem = {
+        label: "$(pencil) " + vscode.l10n.t("Enter custom path..."),
+        description: "",
+        value: "__custom__",
+    };
+    const noneItem = {
+        label: "$(x) None",
+        description: vscode.l10n.t("No task file"),
+        value: "None",
+    };
+    const options = [...detectedItems, manualItem, noneItem];
+    const result = await vscode.window.showQuickPick(options, {
+        placeHolder: taskFiles.length > 0
+            ? vscode.l10n.t("Select task file") + ` (${taskFiles.length} ` + vscode.l10n.t("detected") + ")"
+            : vscode.l10n.t("No task files detected — enter custom path"),
+    });
+    if (!result)
+        return;
+    let file;
+    if (result.value === "__custom__") {
+        const customPath = await vscode.window.showInputBox({
+            prompt: vscode.l10n.t("Enter task file path (relative to workspace root)"),
+            value: currentTaskFile,
+            placeHolder: "PRD.md",
+        });
+        if (!customPath)
+            return;
+        file = customPath;
+    }
+    else if (result.value === "None") {
+        file = undefined;
+    }
+    else {
+        file = result.value;
+    }
+    await context.workspaceState.update("ralph.lastTaskFile", file ?? "None");
+    state.ralphLoopProvider.refresh();
+    state.progressLogger?.info(`Task file set to ${file || "None"}`, "Config");
 }
 async function setConfigProgressFile(context) {
     const currentProgressFile = context.workspaceState.get("ralph.lastProgressFile") ??
