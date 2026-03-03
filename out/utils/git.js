@@ -45,6 +45,7 @@ exports.initializeGitSession = initializeGitSession;
 const cp = __importStar(require("child_process"));
 const util = __importStar(require("util"));
 const execAsync = util.promisify(cp.exec);
+const execFileAsync = util.promisify(cp.execFile);
 /**
  * Check if the given directory is a git repository
  */
@@ -79,17 +80,13 @@ async function getCurrentBranch(workspaceRoot) {
  */
 async function createBranch(workspaceRoot, branchName) {
     try {
-        await execAsync(`git checkout -b ${branchName}`, {
-            cwd: workspaceRoot,
-        });
+        await execFileAsync('git', ['checkout', '-b', branchName], { cwd: workspaceRoot });
         return branchName;
     }
     catch (error) {
         // If branch already exists, try to checkout existing branch
         try {
-            await execAsync(`git checkout ${branchName}`, {
-                cwd: workspaceRoot,
-            });
+            await execFileAsync('git', ['checkout', branchName], { cwd: workspaceRoot });
             return branchName;
         }
         catch {
