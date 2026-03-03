@@ -99,6 +99,8 @@ async function runRalphLoopIteration(config, context) {
                 "Reconnect"
             );
             vscode.window.setStatusBarMessage(`✅ Ralph Loop: 断点续跑成功 — 迭代 ${state.currentIteration}`, 10000);
+            // Clear stale error notifications from Antigravity
+            vscode.commands.executeCommand("notifications.clearAll");
             config._reconnectAttempts = 0; // Reset after successful resume
         }
         else {
@@ -116,6 +118,8 @@ async function runRalphLoopIteration(config, context) {
                 startTime: state.startTime,
             };
             state.ralphLoopProvider.updateSession(session);
+            // Clear any stale error notifications on successful cascade start
+            vscode.commands.executeCommand("notifications.clearAll");
             await (0, agentRunner_1.processIterationWithFreshContext)(agentContext, config, context);
         }
         catch (error) {
