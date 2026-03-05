@@ -163,7 +163,7 @@
             "Fast",
             "Planning"
           ],
-          "default": "Fast",
+          "default": "Planning",
           "description": "%config.defaultMode.desc%"
         },
         "ralphLoop.defaultModel": {
@@ -176,12 +176,12 @@
             "Claude Opus 4.6 (Thinking)",
             "GPT-OSS 120B (Medium)"
           ],
-          "default": "Gemini 3 Flash",
+          "default": "Claude Opus 4.6 (Thinking)",
           "description": "%config.defaultModel.desc%"
         },
         "ralphLoop.promptFile": {
           "type": "string",
-          "default": "",
+          "default": "prompt.md",
           "description": "%config.promptFile.desc%"
         },
         "ralphLoop.taskFile": {

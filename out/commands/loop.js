@@ -79,6 +79,35 @@ async function startRalphLoop(context) {
             await vscode.workspace.fs.writeFile(progressFilePath, Buffer.from(""));
             state.progressLogger?.info(`Created progress file: ${config.progressFile}`, "Setup");
         }
+        // Check for empty files and warn the user
+        const emptyFiles = [];
+        const filesToCheck = [
+            { name: config.taskFile, label: vscode.l10n.t("Task File") },
+            { name: config.promptFile, label: vscode.l10n.t("Prompt File") },
+        ];
+        for (const { name, label } of filesToCheck) {
+            if (name) {
+                try {
+                    const fileUri = vscode.Uri.file(`${config.workspaceRoot}/${name}`);
+                    const fileStat = await vscode.workspace.fs.stat(fileUri);
+                    if (fileStat.size === 0) {
+                        emptyFiles.push(`${label} (${name})`);
+                    }
+                }
+                catch { /* file doesn't exist, already handled elsewhere */ }
+            }
+        }
+        if (emptyFiles.length > 0) {
+            const warningMsg = vscode.l10n.t("The following files are empty: {0}. Please add content before starting the loop.", emptyFiles.join(", "));
+            const choice = await vscode.window.showWarningMessage(warningMsg, vscode.l10n.t("Continue Anyway"), vscode.l10n.t("Cancel"));
+            if (choice !== vscode.l10n.t("Continue Anyway")) {
+                state.setRalphLoopStatus("stopped");
+                vscode.commands.executeCommand("setContext", "ralph.isRunning", false);
+                state.progressLogger?.info("Ralph Loop cancelled — empty files detected", "Validation");
+                return;
+            }
+            state.progressLogger?.warn(`Empty files detected: ${emptyFiles.join(", ")}`, "Validation");
+        }
         state.setRalphLoopStatus("running");
         vscode.commands.executeCommand("setContext", "ralph.isRunning", true);
         // Check if there's a saved iteration from a previous session

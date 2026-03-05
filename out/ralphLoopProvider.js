@@ -81,13 +81,13 @@ class RalphLoopProvider {
         const config = vscode.workspace.getConfiguration("ralphLoop");
         const workspaceState = this.context.workspaceState;
         const mode = workspaceState.get("ralph.lastMode") ??
-            config.get("defaultMode", "Fast");
+            config.get("defaultMode", "Planning");
         const model = workspaceState.get("ralph.lastModel") ??
-            config.get("defaultModel", "Gemini 3 Flash");
+            config.get("defaultModel", "Claude Opus 4.6 (Thinking)");
         const maxIterations = workspaceState.get("ralph.lastMaxIterations") ??
             config.get("maxIterations", 50);
         const promptFile = workspaceState.get("ralph.lastPromptFile") ??
-            config.get("promptFile", "None");
+            config.get("promptFile", "prompt.md");
         const taskFile = workspaceState.get("ralph.lastTaskFile") ??
             config.get("taskFile", "PRD.md");
         const progressFile = workspaceState.get("ralph.lastProgressFile") ??

@@ -38,9 +38,20 @@ exports.discoverTaskFiles = discoverTaskFiles;
 exports.selectTaskFile = selectTaskFile;
 const vscode = __importStar(require("vscode"));
 const state = __importStar(require("../state"));
+async function _readRootFileNames(workspaceRoot) {
+    try {
+        const rootUri = vscode.Uri.file(workspaceRoot);
+        const entries = await vscode.workspace.fs.readDirectory(rootUri);
+        return new Set(entries.map(([name]) => name));
+    }
+    catch {
+        return new Set();
+    }
+}
 async function discoverPromptFiles(workspaceRoot) {
     const promptFiles = [];
     try {
+        const realNames = await _readRootFileNames(workspaceRoot);
         const commonPromptFiles = [
             "PROMPT.md", "prompt.md", "Prompt.md",
             "PROMPT.txt", "prompt.txt",
@@ -49,21 +60,11 @@ async function discoverPromptFiles(workspaceRoot) {
             "AGENT_PROMPT.md", "agent_prompt.md",
             "CONTEXT.md", "context.md",
         ];
-        const promptExistsResults = await Promise.all(
-            commonPromptFiles.map(async (fileName) => {
-                const fileUri = vscode.Uri.file(`${workspaceRoot}/${fileName}`);
-                try {
-                    await vscode.workspace.fs.stat(fileUri);
-                    return true;
-                }
-                catch {
-                    return false;
-                }
-            })
-        );
-        commonPromptFiles.forEach((fileName, i) => {
-            if (promptExistsResults[i] && !promptFiles.includes(fileName)) promptFiles.push(fileName);
-        });
+        for (const fileName of commonPromptFiles) {
+            if (realNames.has(fileName) && !promptFiles.includes(fileName)) {
+                promptFiles.push(fileName);
+            }
+        }
         // Search for files with PROMPT, INSTRUCTION, CONTEXT in the name
         const pattern = new vscode.RelativePattern(
             workspaceRoot,
@@ -81,13 +82,13 @@ async function discoverPromptFiles(workspaceRoot) {
     }
     catch (error) {
         state.progressLogger?.error(`Error discovering prompt files: ${error}`, "Discovery");
-        return ["PROMPT.md"];
+        return ["prompt.md"];
     }
 }
 async function discoverTaskFiles(workspaceRoot) {
     const taskFiles = [];
     try {
-        // Look for common task file patterns (case-insensitive via multiple variants)
+        const realNames = await _readRootFileNames(workspaceRoot);
         const patterns = [
             "PRD.md", "prd.md", "Prd.md",
             "TASKS.md", "tasks.md", "Tasks.md",
@@ -101,21 +102,11 @@ async function discoverTaskFiles(workspaceRoot) {
             "PLAN.md", "plan.md", "Plan.md",
             "PRD.txt", "TASKS.txt", "TODO.txt",
         ];
-        const taskExistsResults = await Promise.all(
-            patterns.map(async (pattern) => {
-                const fileUri = vscode.Uri.file(`${workspaceRoot}/${pattern}`);
-                try {
-                    await vscode.workspace.fs.stat(fileUri);
-                    return true;
-                }
-                catch {
-                    return false;
-                }
-            })
-        );
-        patterns.forEach((pattern, i) => {
-            if (taskExistsResults[i] && !taskFiles.includes(pattern)) taskFiles.push(pattern);
-        });
+        for (const pattern of patterns) {
+            if (realNames.has(pattern) && !taskFiles.includes(pattern)) {
+                taskFiles.push(pattern);
+            }
+        }
         // Also search for any file with TASK, PRD, TODO, SPEC, etc. in the name
         const searchPattern = new vscode.RelativePattern(
             workspaceRoot,
@@ -124,7 +115,6 @@ async function discoverTaskFiles(workspaceRoot) {
         const files = await vscode.workspace.findFiles(searchPattern, "**/node_modules/**", 20);
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
-            // Skip files already found and progress/output files
             if (!taskFiles.includes(relativePath) && !relativePath.includes("progress")) {
                 taskFiles.push(relativePath);
             }

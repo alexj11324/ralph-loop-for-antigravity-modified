@@ -66,7 +66,7 @@ async function configureIterations(context) {
 }
 async function setConfigMode(context) {
     const modes = ["Fast", "Planning"];
-    const currentMode = context.workspaceState.get("ralph.lastMode") ?? "Fast";
+    const currentMode = context.workspaceState.get("ralph.lastMode") ?? "Planning";
     const sortedModes = [currentMode, ...modes.filter((m) => m !== currentMode)];
     const result = await vscode.window.showQuickPick(sortedModes, {
         placeHolder: vscode.l10n.t("Select mode"),
@@ -86,7 +86,7 @@ async function setConfigModel(context) {
         "Claude Opus 4.6 (Thinking)",
         "GPT-OSS 120B (Medium)",
     ];
-    const currentModel = context.workspaceState.get("ralph.lastModel") ?? "Gemini 3 Flash";
+    const currentModel = context.workspaceState.get("ralph.lastModel") ?? "Claude Opus 4.6 (Thinking)";
     const sortedModels = [
         currentModel,
         ...models.filter((m) => m !== currentModel),
