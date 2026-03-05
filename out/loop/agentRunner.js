@@ -255,6 +255,8 @@ ${(0, git_1.generateDoneMarker)(loopId)}
                     // Progress file may not exist yet
                 }
             }
+            // Grace period: after progress file update, allow 5 more polls (20s) for agent to finish git commit etc.
+            let progressGraceCountdown = -1; // -1 = not triggered yet
             // Use polling to monitor agent completion
             for await (const event of state.antigravityClient.pollForCompletion(agentContext.cascadeId, abortController.signal, config.stableThreshold ?? 7)) {
                 if (state.stopRequested) {
@@ -265,15 +267,24 @@ ${(0, git_1.generateDoneMarker)(loopId)}
                 if (event.type === "text") {
                     responseCount++;
                     agentContext.logs.push(`Stream: ${event.content.substring(0, 200)}`);
-                    // Check if progress file was updated — if so, agent has finished its task
-                    if (config.progressFile && progressMtimeBefore > 0) {
+                    // If grace period is active, count down
+                    if (progressGraceCountdown > 0) {
+                        progressGraceCountdown--;
+                        state.progressLogger?.debug(`Progress grace period: ${progressGraceCountdown} polls remaining`, "Execution");
+                    }
+                    else if (progressGraceCountdown === 0) {
+                        state.progressLogger?.info("Progress grace period complete (5 polls / 20s), moving to next iteration", "Execution");
+                        agentContext.logs.push("Progress file updated — grace period complete, exiting polling");
+                        break;
+                    }
+                    // Check if progress file was updated — if so, start grace countdown
+                    if (progressGraceCountdown < 0 && config.progressFile && progressMtimeBefore > 0) {
                         try {
                             const progressUri = vscode.Uri.file(`${config.workspaceRoot}/${config.progressFile}`);
                             const stat = await vscode.workspace.fs.stat(progressUri);
                             if (stat.mtime > progressMtimeBefore) {
-                                state.progressLogger?.info(`Progress file updated (mtime: ${progressMtimeBefore} → ${stat.mtime}), skipping stable threshold wait`, "Execution");
-                                agentContext.logs.push("Progress file updated — early exit from polling");
-                                break;
+                                progressGraceCountdown = 5; // 5 polls × 4s = 20s grace period
+                                state.progressLogger?.info(`Progress file updated (mtime: ${progressMtimeBefore} → ${stat.mtime}), starting 20s grace period`, "Execution");
                             }
                         }
                         catch (_) {
