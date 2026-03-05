@@ -110,16 +110,32 @@ async function startRalphLoop(context) {
         }
         state.setRalphLoopStatus("running");
         vscode.commands.executeCommand("setContext", "ralph.isRunning", true);
-        // Check if there's a saved iteration from a previous session
-        const lastIteration = context.workspaceState.get("ralph.lastIteration") ?? 0;
-        const lastMaxIterations = context.workspaceState.get("ralph.lastMaxIterations") ?? config.maxIterations;
+        // Check progress file for completed entries to determine resume point
+        let progressEntryCount = 0;
+        let hasProgress = false;
+        if (config.progressFile) {
+            try {
+                const progressUri = vscode.Uri.file(`${config.workspaceRoot}/${config.progressFile}`);
+                const progressContent = await vscode.workspace.fs.readFile(progressUri);
+                const progressText = new TextDecoder().decode(progressContent);
+                if (progressText.trim().length > 0) {
+                    // Count completed entries: lines starting with '[' (e.g., "[2026-03-05 06:16] Completed: ...")
+                    const lines = progressText.split("\n");
+                    progressEntryCount = lines.filter((line) => line.trimStart().startsWith("[")).length;
+                    hasProgress = progressEntryCount > 0;
+                }
+            }
+            catch (_) {
+                // Progress file doesn't exist or can't be read
+            }
+        }
         let startFromIteration = 0;
-        if (lastIteration > 0 && lastIteration < lastMaxIterations) {
+        if (hasProgress) {
             const resumeChoice = await vscode.window.showQuickPick(
                 [
                     {
-                        label: `$(debug-continue) 断点续跑 — 从迭代 ${lastIteration + 1} 继续`,
-                        description: `上次在迭代 ${lastIteration}/${lastMaxIterations} 中断`,
+                        label: `$(debug-continue) 断点续跑 — 从迭代 ${progressEntryCount + 1} 继续`,
+                        description: `progress 文件中已有 ${progressEntryCount} 条完成记录`,
                         value: "resume",
                     },
                     {
@@ -128,7 +144,7 @@ async function startRalphLoop(context) {
                         value: "restart",
                     },
                 ],
-                { placeHolder: "检测到上次循环中断，是否断点续跑？" }
+                { placeHolder: "检测到 progress 文件中有已完成记录，是否从断点续跑？" }
             );
             if (!resumeChoice) {
                 state.setRalphLoopStatus("stopped");
@@ -137,7 +153,7 @@ async function startRalphLoop(context) {
                 return;
             }
             if (resumeChoice.value === "resume") {
-                startFromIteration = lastIteration;
+                startFromIteration = progressEntryCount;
             }
         }
         state.setCurrentIteration(startFromIteration);
@@ -145,9 +161,9 @@ async function startRalphLoop(context) {
         state.setExtensionContext(context);
         state.setStartTime(new Date());
         if (startFromIteration > 0) {
-            state.progressLogger?.streamSection(`═══ 断点续跑 — 从迭代 ${startFromIteration + 1} 继续 ═══`);
-            state.progressLogger?.info(`上次循环在迭代 ${startFromIteration} 中断，现在从迭代 ${startFromIteration + 1} 继续`, "Loop");
-            vscode.window.setStatusBarMessage(`✅ Ralph Loop: 断点续跑 — 从迭代 ${startFromIteration + 1} 开始`, 10000);
+            state.progressLogger?.streamSection(`═══ 断点续跑 — 从迭代 ${startFromIteration + 1} 继续 (基于 progress 文件: ${progressEntryCount} 条记录) ═══`);
+            state.progressLogger?.info(`progress 文件中已有 ${progressEntryCount} 条完成记录，从迭代 ${startFromIteration + 1} 继续`, "Loop");
+            vscode.window.setStatusBarMessage(`✅ Ralph Loop: 断点续跑 — 从迭代 ${startFromIteration + 1} 开始 (${progressEntryCount} 条已完成)`, 10000);
         }
         else {
             state.progressLogger?.streamSection("Ralph Loop Started");

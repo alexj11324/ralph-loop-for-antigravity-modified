@@ -1,22 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = { enumerable: true, get: function () { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -242,6 +242,19 @@ ${(0, git_1.generateDoneMarker)(loopId)}
             // Create abort controller for polling
             const abortController = new AbortController();
             state.setStreamAbortController(abortController);
+            // Record progress file mtime before iteration starts for early-exit detection
+            let progressMtimeBefore = 0;
+            if (config.progressFile) {
+                try {
+                    const progressUri = vscode.Uri.file(`${config.workspaceRoot}/${config.progressFile}`);
+                    const stat = await vscode.workspace.fs.stat(progressUri);
+                    progressMtimeBefore = stat.mtime;
+                    state.progressLogger?.debug(`Progress file mtime before iteration: ${progressMtimeBefore}`, "Execution");
+                }
+                catch (_) {
+                    // Progress file may not exist yet
+                }
+            }
             // Use polling to monitor agent completion
             for await (const event of state.antigravityClient.pollForCompletion(agentContext.cascadeId, abortController.signal, config.stableThreshold ?? 7)) {
                 if (state.stopRequested) {
@@ -252,6 +265,21 @@ ${(0, git_1.generateDoneMarker)(loopId)}
                 if (event.type === "text") {
                     responseCount++;
                     agentContext.logs.push(`Stream: ${event.content.substring(0, 200)}`);
+                    // Check if progress file was updated — if so, agent has finished its task
+                    if (config.progressFile && progressMtimeBefore > 0) {
+                        try {
+                            const progressUri = vscode.Uri.file(`${config.workspaceRoot}/${config.progressFile}`);
+                            const stat = await vscode.workspace.fs.stat(progressUri);
+                            if (stat.mtime > progressMtimeBefore) {
+                                state.progressLogger?.info(`Progress file updated (mtime: ${progressMtimeBefore} → ${stat.mtime}), skipping stable threshold wait`, "Execution");
+                                agentContext.logs.push("Progress file updated — early exit from polling");
+                                break;
+                            }
+                        }
+                        catch (_) {
+                            // Ignore stat errors during polling
+                        }
+                    }
                 }
                 else if (event.type === "end") {
                     state.progressLogger?.info(`Stream completed (${responseCount} chunks)`, "Execution");
