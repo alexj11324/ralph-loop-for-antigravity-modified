@@ -206,8 +206,8 @@ async function configureStableThreshold(context) {
         value: currentThreshold.toString(),
         validateInput: (value) => {
             const num = parseInt(value);
-            if (isNaN(num) || num < 1 || num > 20) {
-                return vscode.l10n.t("Please enter a number between 1 and 20");
+            if (isNaN(num) || num < 1 || num > 200) {
+                return vscode.l10n.t("Please enter a number between 1 and 200");
             }
             return null;
         },
