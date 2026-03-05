@@ -332,7 +332,7 @@ class AntigravityClient {
         if (!this.client) {
             throw new Error("Not connected to Antigravity server");
         }
-        const pollIntervalMs = 2000; // Poll every 2 seconds
+        const pollIntervalMs = 4000; // Poll every 4 seconds
         let lastContentLen = 0;
         let stableCount = 0;
         let hasGrown = false;

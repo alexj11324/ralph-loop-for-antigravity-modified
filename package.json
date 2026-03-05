@@ -152,7 +152,7 @@
       "properties": {
         "ralphLoop.maxIterations": {
           "type": "integer",
-          "default": 50,
+          "default": 200,
           "minimum": 1,
           "maximum": 1000,
           "description": "%config.maxIterations.desc%"

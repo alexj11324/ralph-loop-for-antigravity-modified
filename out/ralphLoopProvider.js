@@ -85,7 +85,7 @@ class RalphLoopProvider {
         const model = workspaceState.get("ralph.lastModel") ??
             config.get("defaultModel", "Claude Opus 4.6 (Thinking)");
         const maxIterations = workspaceState.get("ralph.lastMaxIterations") ??
-            config.get("maxIterations", 50);
+            config.get("maxIterations", 200);
         const promptFile = workspaceState.get("ralph.lastPromptFile") ??
             config.get("promptFile", "prompt.md");
         const taskFile = workspaceState.get("ralph.lastTaskFile") ??
@@ -101,7 +101,7 @@ class RalphLoopProvider {
             new RalphLoopItem("config-prompt", vscode.l10n.t("Prompt File"), promptFile || "None", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("file-code")),
             new RalphLoopItem("config-task", vscode.l10n.t("Task File"), taskFile || "None", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("list-unordered")),
             new RalphLoopItem("config-progress", vscode.l10n.t("Progress File"), progressFile || "progress.txt", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("output")),
-            new RalphLoopItem("config-stable-threshold", vscode.l10n.t("Stable Threshold"), `${stableThreshold} (${stableThreshold * 2}s)`, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("clock")),
+            new RalphLoopItem("config-stable-threshold", vscode.l10n.t("Stable Threshold"), `${stableThreshold} (${stableThreshold * 4}s)`, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("clock")),
         ];
         // Add Pseudo Ralph checkbox
         const pseudoRalphEnabled = workspaceState.get("ralph.pseudoRalphMode", false);

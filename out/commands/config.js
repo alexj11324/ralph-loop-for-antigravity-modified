@@ -44,7 +44,7 @@ const vscode = __importStar(require("vscode"));
 const state = __importStar(require("../state"));
 const discovery_1 = require("../utils/discovery");
 async function configureIterations(context) {
-    const currentIterations = context.workspaceState.get("ralph.lastMaxIterations") ?? 50;
+    const currentIterations = context.workspaceState.get("ralph.lastMaxIterations") ?? 200;
     const result = await vscode.window.showInputBox({
         prompt: vscode.l10n.t("Enter maximum iterations per loop"),
         value: currentIterations.toString(),
@@ -216,7 +216,7 @@ async function configureStableThreshold(context) {
         const value = parseInt(result);
         await context.workspaceState.update("ralph.lastStableThreshold", value);
         state.ralphLoopProvider.refresh();
-        state.progressLogger?.info(`Stable threshold set to ${value} (${value * 2} seconds)`, "Config");
+        state.progressLogger?.info(`Stable threshold set to ${value} (${value * 4} seconds)`, "Config");
     }
 }
 //# sourceMappingURL=config.js.map

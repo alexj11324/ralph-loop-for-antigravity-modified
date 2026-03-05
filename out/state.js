@@ -56,7 +56,7 @@ const notification_1 = require("./services/notification");
 // Global state - shared across all modules
 exports.ralphLoopStatus = "stopped";
 exports.currentIteration = 0;
-exports.maxIterations = 50;
+exports.maxIterations = 200;
 exports.startTime = undefined;
 exports.currentLoopPromise = null;
 exports.stopRequested = false;
@@ -125,6 +125,6 @@ function initializeState(channel, provider) {
     exports.notificationService = new notification_1.NotificationService();
     exports.maxIterations = vscode.workspace
         .getConfiguration("ralphLoop")
-        .get("maxIterations", 50);
+        .get("maxIterations", 200);
 }
 //# sourceMappingURL=state.js.map

@@ -62,7 +62,7 @@ function initializeWorkspaceState(context) {
         workspaceState.update("ralph.lastPromptFile", config.get("promptFile", "prompt.md"));
     }
     if (!workspaceState.get("ralph.lastMaxIterations")) {
-        workspaceState.update("ralph.lastMaxIterations", config.get("maxIterations", 50));
+        workspaceState.update("ralph.lastMaxIterations", config.get("maxIterations", 200));
     }
     if (!workspaceState.get("ralph.lastModel")) {
         workspaceState.update("ralph.lastModel", config.get("defaultModel", "Claude Opus 4.6 (Thinking)"));
