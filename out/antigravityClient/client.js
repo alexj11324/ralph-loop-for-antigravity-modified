@@ -328,11 +328,10 @@ class AntigravityClient {
      * Poll GetCascadeTrajectorySteps to monitor agent completion.
      * Returns when agent is done (content stable) or abort signal.
      */
-    async *pollForCompletion(cascadeId, abortSignal, stableThreshold = 7) {
+    async *pollForCompletion(cascadeId, abortSignal, stableThreshold = 7, pollIntervalMs = 4000) {
         if (!this.client) {
             throw new Error("Not connected to Antigravity server");
         }
-        const pollIntervalMs = 4000; // Poll every 4 seconds
         let lastContentLen = 0;
         let stableCount = 0;
         let hasGrown = false;
@@ -404,7 +403,7 @@ class AntigravityClient {
      * Uses same logic as pollForCompletion: continues while content grows,
      * stops when content is stable.
      */
-    async sendMessageAndWait(cascadeId, message, mode, model) {
+    async sendMessageAndWait(cascadeId, message, mode, model, pollIntervalMs = 4000) {
         if (!this.client) {
             throw new Error("Not connected to Antigravity server");
         }
@@ -412,7 +411,7 @@ class AntigravityClient {
         await this.sendMessage(cascadeId, message, mode, model);
         // Then poll for response using same logic as pollForCompletion
         const responses = [];
-        for await (const event of this.pollForCompletion(cascadeId)) {
+        for await (const event of this.pollForCompletion(cascadeId, null, 7, pollIntervalMs)) {
             if (event.type === "text") {
                 responses.push(event.content);
             }

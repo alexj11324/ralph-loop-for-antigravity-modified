@@ -157,6 +157,12 @@
           "maximum": 1000,
           "description": "%config.maxIterations.desc%"
         },
+        "ralphLoop.pollInterval": {
+          "type": "string",
+          "default": "4s",
+          "pattern": "^[\\d.]+\\s*(s|sec|second|seconds|m|min|minute|minutes)?$",
+          "description": "Poll interval for monitoring agent completion. Supports seconds (e.g. '4s', '30s') and minutes (e.g. '1m', '2.5m'). Bare numbers are treated as seconds."
+        },
         "ralphLoop.defaultMode": {
           "type": "string",
           "enum": [

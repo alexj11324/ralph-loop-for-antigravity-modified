@@ -34,7 +34,19 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getLoopConfiguration = getLoopConfiguration;
+exports.parsePollInterval = parsePollInterval;
 const vscode = __importStar(require("vscode"));
+function parsePollInterval(value) {
+    if (!value) return 4000;
+    const str = String(value).trim().toLowerCase();
+    const mMatch = str.match(/^([\d.]+)\s*m(?:in(?:ute)?s?)?$/);
+    if (mMatch) return Math.round(parseFloat(mMatch[1]) * 60 * 1000);
+    const sMatch = str.match(/^([\d.]+)\s*s(?:ec(?:ond)?s?)?$/);
+    if (sMatch) return Math.round(parseFloat(sMatch[1]) * 1000);
+    const num = parseFloat(str);
+    if (!isNaN(num)) return Math.round(num * 1000);
+    return 4000; // fallback
+}
 async function getLoopConfiguration(context) {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders || workspaceFolders.length === 0) {
@@ -63,6 +75,9 @@ async function getLoopConfiguration(context) {
         config.get("progressFile", "progress.txt");
     const stableThreshold = workspaceState.get("ralph.lastStableThreshold") ??
         config.get("stableThreshold", 7);
+    const pollIntervalRaw = workspaceState.get("ralph.lastPollInterval") ??
+        config.get("pollInterval", "4s");
+    const pollIntervalMs = parsePollInterval(pollIntervalRaw);
     const testCommand = config.get("testCommand", "npm run test");
     const lintCommand = config.get("lintCommand", "npm run lint");
     const buildCommand = config.get("buildCommand", "npm run build");
@@ -80,6 +95,8 @@ async function getLoopConfiguration(context) {
         workspaceRoot,
         doneMarker: "", // Set by iteration.ts with proper loopId
         stableThreshold,
+        pollIntervalMs,
+        pollIntervalRaw: pollIntervalRaw,
         backpressure: {
             testCommand,
             lintCommand,

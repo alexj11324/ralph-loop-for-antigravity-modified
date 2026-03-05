@@ -258,7 +258,7 @@ ${(0, git_1.generateDoneMarker)(loopId)}
             // Grace period: after progress file update, allow 5 more polls (20s) for agent to finish git commit etc.
             let progressGraceCountdown = -1; // -1 = not triggered yet
             // Use polling to monitor agent completion
-            for await (const event of state.antigravityClient.pollForCompletion(agentContext.cascadeId, abortController.signal, config.stableThreshold ?? 7)) {
+            for await (const event of state.antigravityClient.pollForCompletion(agentContext.cascadeId, abortController.signal, config.stableThreshold ?? 7, config.pollIntervalMs ?? 4000)) {
                 if (state.stopRequested) {
                     state.progressLogger?.warn("Stop requested, cancelling cascade...", "Execution");
                     await state.antigravityClient.cancelCascade(agentContext.cascadeId);
@@ -311,7 +311,7 @@ ${(0, git_1.generateDoneMarker)(loopId)}
                 // Send reminder message about completion marker and wait for response
                 const reminderMessage = `REMINDER: Before I close this session, verify that you have appended the completion marker "${(0, git_1.generateDoneMarker)(loopId)}" to ${config.progressFile} if ALL tasks in ${config.taskFile} are complete. If you forgot, add it now or you will be respawned in an infinite loop.`;
                 try {
-                    const response = await state.antigravityClient.sendMessageAndWait(agentContext.cascadeId, reminderMessage, config.mode, config.model);
+                    const response = await state.antigravityClient.sendMessageAndWait(agentContext.cascadeId, reminderMessage, config.mode, config.model, config.pollIntervalMs ?? 4000);
                     state.progressLogger?.debug(`Agent acknowledged reminder (response length: ${response.length})`, "Cleanup");
                 }
                 catch (reminderError) {

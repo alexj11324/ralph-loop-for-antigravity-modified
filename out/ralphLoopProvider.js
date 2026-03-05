@@ -94,6 +94,8 @@ class RalphLoopProvider {
             config.get("progressFile", "progress.txt");
         const stableThreshold = workspaceState.get("ralph.lastStableThreshold") ??
             config.get("stableThreshold", 7);
+        const pollInterval = workspaceState.get("ralph.lastPollInterval") ??
+            config.get("pollInterval", "4s");
         const items = [
             new RalphLoopItem("config-mode", vscode.l10n.t("Mode"), mode, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("symbol-method")),
             new RalphLoopItem("config-model", vscode.l10n.t("Model"), model, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("hubot")),
@@ -102,6 +104,7 @@ class RalphLoopProvider {
             new RalphLoopItem("config-task", vscode.l10n.t("Task File"), taskFile || "None", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("list-unordered")),
             new RalphLoopItem("config-progress", vscode.l10n.t("Progress File"), progressFile || "progress.txt", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("output")),
             new RalphLoopItem("config-stable-threshold", vscode.l10n.t("Stable Threshold"), `${stableThreshold} (${stableThreshold * 4}s)`, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("clock")),
+            new RalphLoopItem("config-poll-interval", vscode.l10n.t("Poll Interval"), pollInterval, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("watch")),
         ];
         // Add Pseudo Ralph checkbox
         const pseudoRalphEnabled = workspaceState.get("ralph.pseudoRalphMode", false);
@@ -154,6 +157,10 @@ class RalphLoopProvider {
             "config-stable-threshold": {
                 command: "ralph.configureStableThreshold",
                 title: "Configure Stable Threshold",
+            },
+            "config-poll-interval": {
+                command: "ralph.configurePollInterval",
+                title: "Configure Poll Interval",
             },
             "config-pseudo-ralph": {
                 command: "ralph.togglePseudoRalph",

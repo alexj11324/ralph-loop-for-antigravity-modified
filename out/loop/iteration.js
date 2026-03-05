@@ -218,7 +218,7 @@ async function runRalphLoopIteration(config, context) {
             state.progressLogger?.streamSubSection("Pre-iteration Reminder");
             const reminderMessage = `REMINDER: Before the next iteration starts, verify that you have appended the completion marker "${(0, git_1.generateDoneMarker)(config.loopId)}" to ${config.progressFile} if ALL tasks are complete. If you forgot, add it now or you will continue in an infinite loop.`;
             try {
-                const response = await state.antigravityClient.sendMessageAndWait(state.persistentCascadeId || "", reminderMessage, config.mode, config.model);
+                const response = await state.antigravityClient.sendMessageAndWait(state.persistentCascadeId || "", reminderMessage, config.mode, config.model, config.pollIntervalMs ?? 4000);
                 state.progressLogger?.debug(`Agent acknowledged pre-iteration reminder (response length: ${response.length})`, "Loop");
             }
             catch (reminderError) {

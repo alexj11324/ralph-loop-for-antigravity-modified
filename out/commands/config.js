@@ -40,9 +40,11 @@ exports.setConfigPromptFile = setConfigPromptFile;
 exports.setConfigTaskFile = setConfigTaskFile;
 exports.setConfigProgressFile = setConfigProgressFile;
 exports.configureStableThreshold = configureStableThreshold;
+exports.configurePollInterval = configurePollInterval;
 const vscode = __importStar(require("vscode"));
 const state = __importStar(require("../state"));
 const discovery_1 = require("../utils/discovery");
+const config_1 = require("../loop/config");
 async function configureIterations(context) {
     const currentIterations = context.workspaceState.get("ralph.lastMaxIterations") ?? 200;
     const result = await vscode.window.showInputBox({
@@ -217,6 +219,35 @@ async function configureStableThreshold(context) {
         await context.workspaceState.update("ralph.lastStableThreshold", value);
         state.ralphLoopProvider.refresh();
         state.progressLogger?.info(`Stable threshold set to ${value} (${value * 4} seconds)`, "Config");
+    }
+}
+async function configurePollInterval(context) {
+    const currentInterval = context.workspaceState.get("ralph.lastPollInterval") ?? "4s";
+    const result = await vscode.window.showInputBox({
+        prompt: vscode.l10n.t("Enter poll interval (e.g. 4s, 30s, 1m, 2.5m)"),
+        value: currentInterval,
+        placeHolder: "4s",
+        validateInput: (value) => {
+            const str = value.trim().toLowerCase();
+            if (!str)
+                return vscode.l10n.t("Please enter a value");
+            const valid = /^[\d.]+\s*(s|sec|seconds?|m|min|minutes?)?$/.test(str);
+            if (!valid)
+                return vscode.l10n.t("Invalid format. Use: 4s, 30s, 1m, 2.5m");
+            const ms = (0, config_1.parsePollInterval)(str);
+            if (ms < 1000)
+                return vscode.l10n.t("Minimum interval is 1s");
+            if (ms > 600000)
+                return vscode.l10n.t("Maximum interval is 10m");
+            return null;
+        },
+    });
+    if (result) {
+        const ms = (0, config_1.parsePollInterval)(result);
+        await context.workspaceState.update("ralph.lastPollInterval", result.trim());
+        state.ralphLoopProvider.refresh();
+        const display = ms >= 60000 ? `${(ms / 60000).toFixed(1)}m` : `${(ms / 1000).toFixed(0)}s`;
+        state.progressLogger?.info(`Poll interval set to ${result.trim()} (${ms}ms / ${display})`, "Config");
     }
 }
 //# sourceMappingURL=config.js.map
