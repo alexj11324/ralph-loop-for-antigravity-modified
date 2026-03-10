@@ -142,7 +142,7 @@ async function setConfigTaskFile(context) {
         }
     }
     const taskFiles = await (0, discovery_1.discoverTaskFiles)(workspaceRoot);
-    const currentTaskFile = context.workspaceState.get("ralph.lastTaskFile") ?? "PRD.md";
+    const currentTaskFile = context.workspaceState.get("ralph.lastTaskFile") ?? "docs/tasks/PRD.md";
     // Build options: detected files first (with indicator), then manual input option
     const detectedItems = taskFiles.map((f) => ({
         label: f === currentTaskFile ? `$(check) ${f}` : f,
@@ -172,7 +172,7 @@ async function setConfigTaskFile(context) {
         const customPath = await vscode.window.showInputBox({
             prompt: vscode.l10n.t("Enter task file path (relative to workspace root)"),
             value: currentTaskFile,
-            placeHolder: "PRD.md",
+            placeHolder: "docs/tasks/PRD.md",
         });
         if (!customPath)
             return;
@@ -203,7 +203,7 @@ async function setConfigProgressFile(context) {
     }
     const progressFiles = await (0, discovery_1.discoverProgressFiles)(workspaceRoot);
     const currentProgressFile = context.workspaceState.get("ralph.lastProgressFile") ??
-        "progress.txt";
+        "docs/tasks/progress.txt";
     // Build options: detected files first (with indicator), then manual input option
     const detectedItems = progressFiles.map((f) => ({
         label: f === currentProgressFile ? `$(check) ${f}` : f,
@@ -228,7 +228,7 @@ async function setConfigProgressFile(context) {
         const customPath = await vscode.window.showInputBox({
             prompt: vscode.l10n.t("Enter progress file path (relative to workspace root)"),
             value: currentProgressFile,
-            placeHolder: "progress.txt",
+            placeHolder: "docs/tasks/progress.txt",
         });
         if (customPath === undefined)
             return;
@@ -237,9 +237,9 @@ async function setConfigProgressFile(context) {
     else {
         file = result.value;
     }
-    await context.workspaceState.update("ralph.lastProgressFile", file || "progress.txt");
+    await context.workspaceState.update("ralph.lastProgressFile", file || "docs/tasks/progress.txt");
     state.ralphLoopProvider.refresh();
-    state.progressLogger?.info(`Progress file set to ${file || "progress.txt"}`, "Config");
+    state.progressLogger?.info(`Progress file set to ${file || "docs/tasks/progress.txt"}`, "Config");
 }
 async function configureStableThreshold(context) {
     const currentThreshold = context.workspaceState.get("ralph.lastStableThreshold") ?? 7;

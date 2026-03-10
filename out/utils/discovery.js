@@ -83,7 +83,7 @@ async function discoverPromptFiles(workspaceRoot) {
     }
     catch (error) {
         state.progressLogger?.error(`Error discovering prompt files: ${error}`, "Discovery");
-        return ["prompt.md"];
+        return ["docs/tasks/prompt.md"];
     }
 }
 async function discoverTaskFiles(workspaceRoot) {
@@ -127,7 +127,7 @@ async function discoverTaskFiles(workspaceRoot) {
     }
     catch (error) {
         state.progressLogger?.error(`Error discovering task files: ${error}`, "Discovery");
-        return ["PRD.md", "TASKS.md"];
+        return ["docs/tasks/PRD.md", "docs/tasks/TASKS.md"];
     }
 }
 
@@ -166,7 +166,7 @@ async function discoverProgressFiles(workspaceRoot) {
     }
     catch (error) {
         state.progressLogger?.error(`Error discovering progress files: ${error}`, "Discovery");
-        return ["progress.txt"];
+        return ["docs/tasks/progress.txt"];
     }
 }
 async function selectTaskFile(context) {

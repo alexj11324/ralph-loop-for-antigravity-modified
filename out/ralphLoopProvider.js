@@ -87,11 +87,11 @@ class RalphLoopProvider {
         const maxIterations = workspaceState.get("ralph.lastMaxIterations") ??
             config.get("maxIterations", 200);
         const promptFile = workspaceState.get("ralph.lastPromptFile") ??
-            config.get("promptFile", "prompt.md");
+            config.get("promptFile", "docs/tasks/prompt.md");
         const taskFile = workspaceState.get("ralph.lastTaskFile") ??
-            config.get("taskFile", "PRD.md");
+            config.get("taskFile", "docs/tasks/PRD.md");
         const progressFile = workspaceState.get("ralph.lastProgressFile") ??
-            config.get("progressFile", "progress.txt");
+            config.get("progressFile", "docs/tasks/progress.txt");
         const stableThreshold = workspaceState.get("ralph.lastStableThreshold") ??
             config.get("stableThreshold", 7);
         const pollInterval = workspaceState.get("ralph.lastPollInterval") ??
@@ -104,7 +104,7 @@ class RalphLoopProvider {
             new RalphLoopItem("config-iterations", vscode.l10n.t("Max Iterations"), maxIterations.toString(), vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("sync")),
             new RalphLoopItem("config-prompt", vscode.l10n.t("Prompt File"), promptFile || "None", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("file-code")),
             new RalphLoopItem("config-task", vscode.l10n.t("Task File"), taskFile || "None", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("list-unordered")),
-            new RalphLoopItem("config-progress", vscode.l10n.t("Progress File"), progressFile || "progress.txt", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("output")),
+            new RalphLoopItem("config-progress", vscode.l10n.t("Progress File"), progressFile || "docs/tasks/progress.txt", vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("output")),
             new RalphLoopItem("config-stable-threshold", vscode.l10n.t("Stable Threshold"), `${stableThreshold} (${stableThreshold * 4}s)`, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("clock")),
             new RalphLoopItem("config-poll-interval", vscode.l10n.t("Poll Interval"), pollInterval, vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("watch")),
             new RalphLoopItem("config-grace-polls", vscode.l10n.t("Grace Polls"), gracePolls.toString(), vscode.TreeItemCollapsibleState.None, new vscode.ThemeIcon("history")),

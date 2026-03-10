@@ -78,9 +78,9 @@ async function getLoopConfiguration(context) {
     const maxIterations = workspaceState.get("ralph.lastMaxIterations") ??
         config.get("maxIterations", 200);
     const taskFileRaw = workspaceState.get("ralph.lastTaskFile") ??
-        config.get("taskFile", "PRD.md");
+        config.get("taskFile", "docs/tasks/PRD.md");
     const progressFileRaw = workspaceState.get("ralph.lastProgressFile") ??
-        config.get("progressFile", "progress.txt");
+        config.get("progressFile", "docs/tasks/progress.txt");
     // Auto-resolve: if configured path doesn't exist, try docs/tasks/ variant
     const fs = require("fs");
     const pathMod = require("path");

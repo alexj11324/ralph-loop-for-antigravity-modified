@@ -59,7 +59,7 @@ function initializeWorkspaceState(context) {
     const workspaceState = context.workspaceState;
     const config = vscode.workspace.getConfiguration("ralphLoop");
     if (!workspaceState.get("ralph.lastPromptFile")) {
-        workspaceState.update("ralph.lastPromptFile", config.get("promptFile", "prompt.md"));
+        workspaceState.update("ralph.lastPromptFile", config.get("promptFile", "docs/tasks/prompt.md"));
     }
     if (!workspaceState.get("ralph.lastMaxIterations")) {
         workspaceState.update("ralph.lastMaxIterations", config.get("maxIterations", 200));
