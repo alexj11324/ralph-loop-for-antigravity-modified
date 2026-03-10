@@ -377,7 +377,9 @@ class AntigravityClient {
             }
             // Track content changes
             const contentGrew = text.length > lastContentLen;
-            if (contentGrew) {
+            // Only count as real growth if content increased by more than 50 chars
+            const meaningfulGrowth = text.length > lastContentLen + 50;
+            if (meaningfulGrowth) {
                 hasGrown = true;
                 stableCount = 0;
                 this.debugLog(`[${elapsed}s] Content grew: ${lastContentLen} -> ${text.length}`);
@@ -403,7 +405,7 @@ class AntigravityClient {
      * Uses same logic as pollForCompletion: continues while content grows,
      * stops when content is stable.
      */
-    async sendMessageAndWait(cascadeId, message, mode, model, pollIntervalMs = 4000) {
+    async sendMessageAndWait(cascadeId, message, mode, model, pollIntervalMs = 4000, stableThreshold = 7) {
         if (!this.client) {
             throw new Error("Not connected to Antigravity server");
         }
@@ -411,7 +413,7 @@ class AntigravityClient {
         await this.sendMessage(cascadeId, message, mode, model);
         // Then poll for response using same logic as pollForCompletion
         const responses = [];
-        for await (const event of this.pollForCompletion(cascadeId, null, 7, pollIntervalMs)) {
+        for await (const event of this.pollForCompletion(cascadeId, null, stableThreshold, pollIntervalMs)) {
             if (event.type === "text") {
                 responses.push(event.content);
             }
