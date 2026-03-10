@@ -161,6 +161,8 @@ async function runRalphLoopIteration(config, context) {
                             if (token.isCancellationRequested || state.stopRequested) {
                                 state.progressLogger?.warn("Reconnect cancelled by user", "Reconnect");
                                 state.setStopRequested(true);
+                                state.setRalphLoopStatus("stopped");
+                                vscode.commands.executeCommand("setContext", "ralph.isRunning", false);
                                 return;
                             }
                             progress.report({
@@ -202,7 +204,7 @@ async function runRalphLoopIteration(config, context) {
                 state.outputChannel.show();
             }
             else if (action === "Stop Loop") {
-                await vscode.commands.executeCommand("ralph.stopLoop");
+                await vscode.commands.executeCommand("ralph.stop");
                 return;
             }
             throw error;

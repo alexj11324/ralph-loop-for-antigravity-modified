@@ -117,12 +117,13 @@ async function setConfigPromptFile(context) {
         }
     }
     const promptFiles = await (0, discovery_1.discoverPromptFiles)(workspaceRoot);
-    const options = [vscode.l10n.t("None (skip prompt)"), ...promptFiles];
+    const skipPromptLabel = vscode.l10n.t("None (skip prompt)");
+    const options = [skipPromptLabel, ...promptFiles];
     const result = await vscode.window.showQuickPick(options, {
         placeHolder: vscode.l10n.t("Select prompt file"),
     });
     if (result !== undefined) {
-        const file = result.startsWith("None") ? "" : result;
+        const file = result === skipPromptLabel ? "" : result;
         await context.workspaceState.update("ralph.lastPromptFile", file);
         state.ralphLoopProvider.refresh();
         state.progressLogger?.info(`Prompt file set to ${file || "None"}`, "Config");
@@ -217,9 +218,15 @@ async function configureStableThreshold(context) {
     });
     if (result) {
         const value = parseInt(result);
+        const pollIntervalRaw = context.workspaceState.get("ralph.lastPollInterval") ?? "4s";
+        const pollIntervalMs = (0, config_1.parsePollInterval)(pollIntervalRaw);
+        const stableWindowMs = value * pollIntervalMs;
+        const stableWindowDisplay = stableWindowMs >= 60000
+            ? `${(stableWindowMs / 60000).toFixed(1)}m`
+            : `${Math.round(stableWindowMs / 1000)}s`;
         await context.workspaceState.update("ralph.lastStableThreshold", value);
         state.ralphLoopProvider.refresh();
-        state.progressLogger?.info(`Stable threshold set to ${value} (${value * 4} seconds)`, "Config");
+        state.progressLogger?.info(`Stable threshold set to ${value} (${stableWindowDisplay} at ${pollIntervalRaw})`, "Config");
     }
 }
 async function configurePollInterval(context) {

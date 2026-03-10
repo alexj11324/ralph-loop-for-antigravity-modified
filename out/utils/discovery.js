@@ -130,32 +130,7 @@ async function discoverTaskFiles(workspaceRoot) {
     }
 }
 async function selectTaskFile(context) {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders || workspaceFolders.length === 0) {
-        vscode.window.showErrorMessage("No workspace folder open");
-        return;
-    }
-    // Get workspace from active editor, fall back to first workspace
-    let workspaceRoot = workspaceFolders[0].uri.fsPath;
-    const activeEditor = vscode.window.activeTextEditor;
-    if (activeEditor) {
-        const activeWorkspace = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
-        if (activeWorkspace) {
-            workspaceRoot = activeWorkspace.uri.fsPath;
-        }
-    }
-    const taskFiles = await discoverTaskFiles(workspaceRoot);
-    if (taskFiles.length === 0) {
-        vscode.window.showInformationMessage("No task files (PRD.md, TASKS.md, etc.) found in workspace.");
-        return;
-    }
-    const result = await vscode.window.showQuickPick(taskFiles, {
-        placeHolder: "Select task file for Ralph Loop",
-    });
-    if (result) {
-        await context.workspaceState.update("ralph.lastTaskFile", result);
-        state.ralphLoopProvider.refresh();
-        state.progressLogger?.info(`Task file selected: ${result}`, "Config");
-    }
+    void context;
+    await vscode.commands.executeCommand("ralph.setConfigTaskFile");
 }
 //# sourceMappingURL=discovery.js.map
