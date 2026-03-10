@@ -28,8 +28,8 @@ The Ralph Loop methodology solves this by externalizing memory to files and runn
    - Use **Planning mode** in Antigravity to help create a proper PRD with discrete tasks
 3. **Open the Ralph Loop sidebar** via the Activity Bar icon
 4. **Configure your session** in the sidebar:
-   - Select task file (default: `PRD.md`)
-   - Set progress file (default: `progress.txt`)
+   - Select task file (default: `docs/tasks/PRD.md`)
+   - Set progress file (default: `docs/tasks/progress.txt`)
    - Choose mode and model
    - Set max iterations
 5. **Start the loop** using the play button in the sidebar
@@ -42,11 +42,11 @@ The Ralph Loop methodology solves this by externalizing memory to files and runn
 
 The extension uses a simple file-based architecture:
 
-| File           | Purpose            | Description                                                  |
+| File | Purpose | Description |
 |----------------|--------------------|--------------------------------------------------------------|
-| `PRD.md`       | Task Specification | Your tasks/requirements. **Read-only** for agent.            |
-| `progress.txt` | Progress Log       | Agent appends progress here. Source of truth for completion. |
-| `prompt.md`    | Instructions       | Optional custom instructions for the agent.                  |
+| `docs/tasks/PRD.md` | Task Specification | Your tasks/requirements. **Read-only** for agent. |
+| `docs/tasks/progress.txt` | Progress Log | Agent appends progress here. Source of truth for completion. |
+| `docs/tasks/prompt.md` | Instructions | Optional custom instructions for the agent. |
 
 ### Task File Format
 

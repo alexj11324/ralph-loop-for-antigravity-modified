@@ -193,17 +193,17 @@
         },
         "ralphLoop.promptFile": {
           "type": "string",
-          "default": "prompt.md",
+          "default": "docs/tasks/prompt.md",
           "description": "%config.promptFile.desc%"
         },
         "ralphLoop.taskFile": {
           "type": "string",
-          "default": "PRD.md",
+          "default": "docs/tasks/PRD.md",
           "description": "%config.taskFile.desc%"
         },
         "ralphLoop.progressFile": {
           "type": "string",
-          "default": "progress.txt",
+          "default": "docs/tasks/progress.txt",
           "description": "The file where the agent will log its progress and track completed tasks."
         },
         "ralphLoop.stableThreshold": {
