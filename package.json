@@ -208,9 +208,10 @@
         },
         "ralphLoop.stableThreshold": {
           "type": "integer",
-          "default": 300,
+          "default": 7,
           "minimum": 1,
-          "description": "Time in milliseconds to wait for file changes to stabilize before progressing to the next iteration."
+          "description": "Number of consecutive polling intervals with no content growth before an iteration is considered complete.",
+          "markdownDescription": "Number of consecutive polling intervals with no content growth before an iteration is considered complete. Default is `7`."
         },
         "ralphLoop.testCommand": {
           "type": "string",
