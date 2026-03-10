@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.discoverPromptFiles = discoverPromptFiles;
 exports.discoverTaskFiles = discoverTaskFiles;
+exports.discoverProgressFiles = discoverProgressFiles;
 exports.selectTaskFile = selectTaskFile;
 const vscode = __importStar(require("vscode"));
 const state = __importStar(require("../state"));
@@ -127,6 +128,45 @@ async function discoverTaskFiles(workspaceRoot) {
     catch (error) {
         state.progressLogger?.error(`Error discovering task files: ${error}`, "Discovery");
         return ["PRD.md", "TASKS.md"];
+    }
+}
+
+async function discoverProgressFiles(workspaceRoot) {
+    const rootFiles = [];
+    const docsFiles = [];
+    try {
+        const realNames = await _readRootFileNames(workspaceRoot);
+        const patterns = [
+            "progress.txt", "progress.md", "PROGRESS.txt", "PROGRESS.md",
+            "log.txt", "log.md", "LOG.txt", "LOG.md",
+            "history.txt", "history.md", "HISTORY.txt", "HISTORY.md"
+        ];
+        for (const pattern of patterns) {
+            if (realNames.has(pattern) && !rootFiles.includes(pattern)) {
+                rootFiles.push(pattern);
+            }
+        }
+
+        // Only search in docs/tasks/ (the standard deliverable path)
+        const docsTasksPattern = new vscode.RelativePattern(
+            workspaceRoot,
+            "docs/tasks/{*progress*,*PROGRESS*,*log*,*LOG*,*history*,*HISTORY*}.{txt,md}"
+        );
+        const files = await vscode.workspace.findFiles(docsTasksPattern, undefined, 20);
+        for (const file of files) {
+            const relativePath = vscode.workspace.asRelativePath(file);
+            if (!docsFiles.includes(relativePath)) {
+                docsFiles.push(relativePath);
+            }
+        }
+
+        // Priority: docs/tasks/ first, then root files
+        const combined = [...docsFiles.sort(), ...rootFiles.sort()];
+        return [...new Set(combined)];
+    }
+    catch (error) {
+        state.progressLogger?.error(`Error discovering progress files: ${error}`, "Discovery");
+        return ["progress.txt"];
     }
 }
 async function selectTaskFile(context) {

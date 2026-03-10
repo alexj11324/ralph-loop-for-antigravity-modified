@@ -189,18 +189,57 @@ async function setConfigTaskFile(context) {
     state.progressLogger?.info(`Task file set to ${file || "None"}`, "Config");
 }
 async function setConfigProgressFile(context) {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders)
+        return;
+    // Get workspace from active editor, fall back to first workspace
+    let workspaceRoot = workspaceFolders[0].uri.fsPath;
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor) {
+        const activeWorkspace = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
+        if (activeWorkspace) {
+            workspaceRoot = activeWorkspace.uri.fsPath;
+        }
+    }
+    const progressFiles = await (0, discovery_1.discoverProgressFiles)(workspaceRoot);
     const currentProgressFile = context.workspaceState.get("ralph.lastProgressFile") ??
         "progress.txt";
-    const result = await vscode.window.showInputBox({
-        prompt: vscode.l10n.t("Enter progress file path (relative to workspace root)"),
-        value: currentProgressFile,
-        placeHolder: "progress.txt",
+    // Build options: detected files first (with indicator), then manual input option
+    const detectedItems = progressFiles.map((f) => ({
+        label: f === currentProgressFile ? `$(check) ${f}` : f,
+        description: vscode.l10n.t("Detected in workspace"),
+        value: f,
+    }));
+    const manualItem = {
+        label: "$(pencil) " + vscode.l10n.t("Enter custom path..."),
+        description: "",
+        value: "__custom__",
+    };
+    const options = [...detectedItems, manualItem];
+    const result = await vscode.window.showQuickPick(options, {
+        placeHolder: progressFiles.length > 0
+            ? vscode.l10n.t("Select progress file") + ` (${progressFiles.length} ` + vscode.l10n.t("detected") + ")"
+            : vscode.l10n.t("No progress files detected — enter custom path"),
     });
-    if (result !== undefined) {
-        await context.workspaceState.update("ralph.lastProgressFile", result || "progress.txt");
-        state.ralphLoopProvider.refresh();
-        state.progressLogger?.info(`Progress file set to ${result || "progress.txt"}`, "Config");
+    if (!result)
+        return;
+    let file;
+    if (result.value === "__custom__") {
+        const customPath = await vscode.window.showInputBox({
+            prompt: vscode.l10n.t("Enter progress file path (relative to workspace root)"),
+            value: currentProgressFile,
+            placeHolder: "progress.txt",
+        });
+        if (customPath === undefined)
+            return;
+        file = customPath;
     }
+    else {
+        file = result.value;
+    }
+    await context.workspaceState.update("ralph.lastProgressFile", file || "progress.txt");
+    state.ralphLoopProvider.refresh();
+    state.progressLogger?.info(`Progress file set to ${file || "progress.txt"}`, "Config");
 }
 async function configureStableThreshold(context) {
     const currentThreshold = context.workspaceState.get("ralph.lastStableThreshold") ?? 7;
