@@ -34,8 +34,8 @@ class ProgressLogger {
         }
     }
     formatIterationPrefix() {
-        if (this.currentIteration > 0 && this.maxIterations > 0) {
-            return `[${this.currentIteration}/${this.maxIterations}]`;
+        if (this.currentIteration >= 0 && this.maxIterations > 0) {
+            return `[${this.currentIteration + 1}/${this.maxIterations}]`;
         }
         return "";
     }

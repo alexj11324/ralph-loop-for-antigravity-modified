@@ -63,7 +63,7 @@ async function runRalphLoopIteration(config, context) {
         state.currentIteration < state.maxIterations &&
         !state.stopRequested) {
         while (state.ralphLoopStatus === "paused" && !state.stopRequested) {
-            state.progressLogger?.setIteration(state.currentIteration + 1, state.maxIterations);
+            state.progressLogger?.setIteration(state.currentIteration, state.maxIterations);
             state.progressLogger?.info("Paused - waiting for resume...", "Loop");
             const pausedSession = {
                 status: "paused",
