@@ -94,6 +94,8 @@ async function getLoopConfiguration(context) {
     }
     const stableThreshold = workspaceState.get("ralph.lastStableThreshold") ??
         config.get("stableThreshold", 7);
+    const gracePolls = workspaceState.get("ralph.lastGracePolls") ??
+        config.get("gracePolls", 5);
     const pollIntervalRaw = workspaceState.get("ralph.lastPollInterval") ??
         config.get("pollInterval", "4s");
     const pollIntervalMs = parsePollInterval(pollIntervalRaw);
@@ -114,6 +116,7 @@ async function getLoopConfiguration(context) {
         workspaceRoot,
         doneMarker: "", // Set by iteration.ts with proper loopId
         stableThreshold,
+        gracePolls,
         pollIntervalMs,
         pollIntervalRaw: pollIntervalRaw,
         backpressure: {

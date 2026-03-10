@@ -40,6 +40,7 @@ exports.setConfigPromptFile = setConfigPromptFile;
 exports.setConfigTaskFile = setConfigTaskFile;
 exports.setConfigProgressFile = setConfigProgressFile;
 exports.configureStableThreshold = configureStableThreshold;
+exports.configureGracePolls = configureGracePolls;
 exports.configurePollInterval = configurePollInterval;
 const vscode = __importStar(require("vscode"));
 const state = __importStar(require("../state"));
@@ -248,6 +249,26 @@ async function configurePollInterval(context) {
         state.ralphLoopProvider.refresh();
         const display = ms >= 60000 ? `${(ms / 60000).toFixed(1)}m` : `${(ms / 1000).toFixed(0)}s`;
         state.progressLogger?.info(`Poll interval set to ${result.trim()} (${ms}ms / ${display})`, "Config");
+    }
+}
+async function configureGracePolls(context) {
+    const currentGrace = context.workspaceState.get("ralph.lastGracePolls") ?? 5;
+    const result = await vscode.window.showInputBox({
+        prompt: vscode.l10n.t("Enter grace polls (number of polls after progress update before next iteration)"),
+        value: currentGrace.toString(),
+        validateInput: (value) => {
+            const num = parseInt(value);
+            if (isNaN(num) || num < 1) {
+                return vscode.l10n.t("Please enter a number >= 1");
+            }
+            return null;
+        },
+    });
+    if (result) {
+        const value = parseInt(result);
+        await context.workspaceState.update("ralph.lastGracePolls", value);
+        state.ralphLoopProvider.refresh();
+        state.progressLogger?.info(`Grace polls set to ${value}`, "Config");
     }
 }
 //# sourceMappingURL=config.js.map

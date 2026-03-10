@@ -163,6 +163,12 @@
           "pattern": "^[\\d.]+\\s*(s|sec|second|seconds|m|min|minute|minutes)?$",
           "description": "Poll interval for monitoring agent completion. Supports seconds (e.g. '4s', '30s') and minutes (e.g. '1m', '2.5m'). Bare numbers are treated as seconds."
         },
+        "ralphLoop.gracePolls": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 1,
+          "description": "Number of grace polls after progress file update before moving to next iteration. Allows the agent to finish cleanup (git commit, etc.)."
+        },
         "ralphLoop.defaultMode": {
           "type": "string",
           "enum": [

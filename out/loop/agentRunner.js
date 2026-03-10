@@ -284,8 +284,9 @@ ${(0, git_1.generateDoneMarker)(loopId)}
                             const stat = await vscode.workspace.fs.stat(progressUri);
                             // Trigger if: file was modified (mtime changed) OR file was created (mtime was 0, now exists)
                             if (stat.mtime > progressMtimeBefore) {
-                                progressGraceCountdown = 5; // 5 polls grace period
-                                state.progressLogger?.info(`Progress file updated (mtime: ${progressMtimeBefore} → ${stat.mtime}), starting grace period`, "Execution");
+                                const gp = config.gracePolls ?? 5;
+                                progressGraceCountdown = gp;
+                                state.progressLogger?.info(`Progress file updated (mtime: ${progressMtimeBefore} → ${stat.mtime}), starting ${gp}-poll grace period`, "Execution");
                             }
                         }
                         catch (_) {

@@ -134,6 +134,7 @@ function activate(context) {
         vscode.commands.registerCommand("ralph.setConfigProgressFile", () => configCommands.setConfigProgressFile(context)),
         vscode.commands.registerCommand("ralph.configureStableThreshold", () => configCommands.configureStableThreshold(context)),
         vscode.commands.registerCommand("ralph.configurePollInterval", () => configCommands.configurePollInterval(context)),
+        vscode.commands.registerCommand("ralph.configureGracePolls", () => configCommands.configureGracePolls(context)),
         vscode.commands.registerCommand("ralph.selectTaskFile", () => (0, discovery_1.selectTaskFile)(context)),
         vscode.commands.registerCommand("ralph.showOutput", () => state.outputChannel.show()),
         vscode.commands.registerCommand("ralph.reportBug", () => {
