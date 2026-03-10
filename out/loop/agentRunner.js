@@ -255,8 +255,9 @@ ${(0, git_1.generateDoneMarker)(loopId)}
                     // Progress file may not exist yet
                 }
             }
-            // Grace period: after progress file update, allow 5 more polls (20s) for agent to finish git commit etc.
+            // Grace period: after progress file update, allow extra polls for agent to finish git commit etc.
             let progressGraceCountdown = -1; // -1 = not triggered yet
+            let stableEndReached = false; // track if stable threshold was hit
             // Use polling to monitor agent completion
             for await (const event of state.antigravityClient.pollForCompletion(agentContext.cascadeId, abortController.signal, config.stableThreshold ?? 7, config.pollIntervalMs ?? 4000)) {
                 if (state.stopRequested) {
@@ -264,6 +265,22 @@ ${(0, git_1.generateDoneMarker)(loopId)}
                     await state.antigravityClient.cancelCascade(agentContext.cascadeId);
                     throw new Error("Stop requested during processing");
                 }
+                // Helper: check if progress file was updated and trigger grace period
+                const checkProgressAndTriggerGrace = async () => {
+                    if (progressGraceCountdown >= 0 || !config.progressFile) return;
+                    try {
+                        const progressUri = vscode.Uri.file(`${config.workspaceRoot}/${config.progressFile}`);
+                        const stat = await vscode.workspace.fs.stat(progressUri);
+                        if (stat.mtime > progressMtimeBefore) {
+                            const gp = config.gracePolls ?? 5;
+                            progressGraceCountdown = gp;
+                            state.progressLogger?.info(`Progress file updated (mtime: ${progressMtimeBefore} → ${stat.mtime}), starting ${gp}-poll grace period`, "Execution");
+                        }
+                    }
+                    catch (_) {
+                        // Ignore stat errors during polling
+                    }
+                };
                 if (event.type === "text") {
                     responseCount++;
                     agentContext.logs.push(`Stream: ${event.content.substring(0, 200)}`);
@@ -273,30 +290,34 @@ ${(0, git_1.generateDoneMarker)(loopId)}
                         state.progressLogger?.debug(`Progress grace period: ${progressGraceCountdown} polls remaining`, "Execution");
                     }
                     else if (progressGraceCountdown === 0) {
-                        state.progressLogger?.info("Progress grace period complete (5 polls / 20s), moving to next iteration", "Execution");
+                        state.progressLogger?.info(`Progress grace period complete, moving to next iteration`, "Execution");
                         agentContext.logs.push("Progress file updated — grace period complete, exiting polling");
                         break;
                     }
                     // Check if progress file was updated — if so, start grace countdown
-                    if (progressGraceCountdown < 0 && config.progressFile) {
-                        try {
-                            const progressUri = vscode.Uri.file(`${config.workspaceRoot}/${config.progressFile}`);
-                            const stat = await vscode.workspace.fs.stat(progressUri);
-                            // Trigger if: file was modified (mtime changed) OR file was created (mtime was 0, now exists)
-                            if (stat.mtime > progressMtimeBefore) {
-                                const gp = config.gracePolls ?? 5;
-                                progressGraceCountdown = gp;
-                                state.progressLogger?.info(`Progress file updated (mtime: ${progressMtimeBefore} → ${stat.mtime}), starting ${gp}-poll grace period`, "Execution");
-                            }
-                        }
-                        catch (_) {
-                            // Ignore stat errors during polling
-                        }
-                    }
+                    await checkProgressAndTriggerGrace();
                 }
                 else if (event.type === "end") {
-                    state.progressLogger?.info(`Stream completed (${responseCount} chunks)`, "Execution");
-                    agentContext.logs.push("Stream completed");
+                    // Stable threshold reached — but check if grace period should take over
+                    await checkProgressAndTriggerGrace();
+                    if (progressGraceCountdown > 0) {
+                        // Grace period is active — DON'T break, let grace period finish
+                        // But pollForCompletion has returned, so we need to do our own grace countdown
+                        state.progressLogger?.info(`Stable threshold reached but grace period active (${progressGraceCountdown} polls remaining), waiting...`, "Execution");
+                        const pollMs = config.pollIntervalMs ?? 4000;
+                        while (progressGraceCountdown > 0) {
+                            if (state.stopRequested) break;
+                            await new Promise((r) => setTimeout(r, pollMs));
+                            progressGraceCountdown--;
+                            state.progressLogger?.debug(`Post-stable grace period: ${progressGraceCountdown} polls remaining`, "Execution");
+                        }
+                        state.progressLogger?.info("Grace period complete after stable threshold, moving to next iteration", "Execution");
+                        agentContext.logs.push("Grace period complete after stable threshold");
+                    }
+                    else {
+                        state.progressLogger?.info(`Stream completed (${responseCount} chunks)`, "Execution");
+                        agentContext.logs.push("Stream completed");
+                    }
                     break;
                 }
                 else if (event.type === "error") {
