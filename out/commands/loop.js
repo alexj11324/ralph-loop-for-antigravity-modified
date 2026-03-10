@@ -119,9 +119,9 @@ async function startRalphLoop(context) {
                 const progressContent = await vscode.workspace.fs.readFile(progressUri);
                 const progressText = new TextDecoder().decode(progressContent);
                 if (progressText.trim().length > 0) {
-                    // Count completed entries: lines starting with '[' (e.g., "[2026-03-05 06:16] Completed: ...")
+                    // Count completed entries: lines containing " Completed: " 
                     const lines = progressText.split("\n");
-                    progressEntryCount = lines.filter((line) => line.trimStart().startsWith("[")).length;
+                    progressEntryCount = lines.filter((line) => line.includes(" Completed: ")).length;
                     hasProgress = progressEntryCount > 0;
                 }
             }

@@ -202,7 +202,7 @@ async function runRalphLoopIteration(config, context) {
                 state.outputChannel.show();
             }
             else if (action === "Stop Loop") {
-                await vscode.commands.executeCommand("ralph.stopLoop");
+                await vscode.commands.executeCommand("ralph.stop");
                 return;
             }
             throw error;

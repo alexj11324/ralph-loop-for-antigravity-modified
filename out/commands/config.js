@@ -122,7 +122,7 @@ async function setConfigPromptFile(context) {
         placeHolder: vscode.l10n.t("Select prompt file"),
     });
     if (result !== undefined) {
-        const file = result.startsWith("None") ? "" : result;
+        const file = (result.startsWith("None") || result.includes("无(")) ? "" : result;
         await context.workspaceState.update("ralph.lastPromptFile", file);
         state.ralphLoopProvider.refresh();
         state.progressLogger?.info(`Prompt file set to ${file || "None"}`, "Config");

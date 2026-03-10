@@ -166,9 +166,9 @@ Configure Ralph Loop via VS Code Settings (`Preferences: Open Settings`):
 
 | Setting                    | Default          | Description                 |
 |----------------------------|------------------|-----------------------------|
-| `ralphLoop.maxIterations`  | `50`             | Maximum iterations per loop |
-| `ralphLoop.defaultMode`    | `Fast`           | Default mode                |
-| `ralphLoop.defaultModel`   | `Gemini 3 Flash` | Default AI model            |
+| `ralphLoop.maxIterations`  | `200`            | Maximum iterations per loop |
+| `ralphLoop.defaultMode`    | `Planning`       | Default mode                |
+| `ralphLoop.defaultModel`   | `Claude Opus 4.6 (Thinking)` | Default AI model            |
 | `ralphLoop.promptFile`     | `None`           | Default prompt file         |
 | `ralphLoop.taskFile`       | `PRD.md`         | Default task file           |
 | `ralphLoop.progressFile`   | `progress.txt`   | Default progress file       |
