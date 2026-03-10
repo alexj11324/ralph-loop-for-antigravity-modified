@@ -8,7 +8,7 @@
 > - 🔄 **Auto-reconnect with breakpoint resume** (断点续跑) — automatically recovers from Antigravity server crashes with exponential backoff (up to 5 retries, 15s–120s delays)
 > - 💾 **Settings persistence** — remembers your last used model, mode, prompt file, and other settings across sessions
 > - 🤖 **Latest model support**: Claude Sonnet 4.6 (Thinking), Claude Opus 4.6 (Thinking), Gemini 3.1 Pro (High/Low), GPT-OSS 120B
-> - ⚡ **Updated API integration** for Antigravity v1.107+ (JSON-based REST API)
+> - ⚡ **Updated Antigravity integration** for newer Antigravity builds
 
 A VSCode extension that brings the Ralph Loop autonomous AI agent methodology to Antigravity.
 
@@ -112,11 +112,11 @@ Your session configuration (model, mode, max iterations, prompt file, etc.) is a
 
 ### 🔍 Smart File Auto-Detection
 
-When selecting task or prompt files, the extension automatically scans your workspace for matching files:
+When selecting task or prompt files, the extension scans your workspace root and `docs/tasks/` for matching files:
 
 - **Task files**: `PRD.md`, `TASKS.md`, `TODO.md`, `SPEC.md`, `REQUIREMENTS.md`, `BACKLOG.md`, `ROADMAP.md`, `PLAN.md`, `ISSUES.md` (+ case variants and `.txt`)
 - **Prompt files**: `PROMPT.md`, `INSTRUCTIONS.md`, `SYSTEM_PROMPT.md`, `AGENT_PROMPT.md`, `CONTEXT.md` (+ case variants and `.txt`)
-- Also searches subdirectories for files containing these keywords
+- Also searches `docs/tasks/` for files containing these keywords
 - QuickPick shows detected files with a "custom path" fallback option
 
 ### Activity Bar & Sidebar
@@ -132,13 +132,9 @@ Ralph Loop has a dedicated Activity Bar icon. The sidebar shows:
   - Task File
   - Progress File
 
-### Status Bar
+### Status Messages
 
-A persistent status bar item displays:
-
-- Loop state: `Running`, `Paused`, or `Stopped`
-- Current iteration: `15/50`
-- Elapsed time: `2m 34s`
+Ralph Loop shows temporary status bar messages for key events such as reconnect and resume progress.
 
 ### Output Channel
 
@@ -166,10 +162,10 @@ Configure Ralph Loop via VS Code Settings (`Preferences: Open Settings`):
 
 | Setting                    | Default          | Description                 |
 |----------------------------|------------------|-----------------------------|
-| `ralphLoop.maxIterations`  | `50`             | Maximum iterations per loop |
-| `ralphLoop.defaultMode`    | `Fast`           | Default mode                |
-| `ralphLoop.defaultModel`   | `Gemini 3 Flash` | Default AI model            |
-| `ralphLoop.promptFile`     | `None`           | Default prompt file         |
+| `ralphLoop.maxIterations`  | `200`                          | Maximum iterations per loop |
+| `ralphLoop.defaultMode`    | `Planning`                     | Default mode                |
+| `ralphLoop.defaultModel`   | `Claude Opus 4.6 (Thinking)`   | Default AI model            |
+| `ralphLoop.promptFile`     | `prompt.md`                    | Default prompt file         |
 | `ralphLoop.taskFile`       | `PRD.md`         | Default task file           |
 | `ralphLoop.progressFile`   | `progress.txt`   | Default progress file       |
 

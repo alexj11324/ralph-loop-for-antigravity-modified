@@ -83,6 +83,26 @@
         "category": "Ralph"
       },
       {
+        "command": "ralph.setConfigProgressFile",
+        "title": "%command.setConfigProgressFile.title%",
+        "category": "Ralph"
+      },
+      {
+        "command": "ralph.configureStableThreshold",
+        "title": "%command.configureStableThreshold.title%",
+        "category": "Ralph"
+      },
+      {
+        "command": "ralph.configurePollInterval",
+        "title": "%command.configurePollInterval.title%",
+        "category": "Ralph"
+      },
+      {
+        "command": "ralph.configureGracePolls",
+        "title": "%command.configureGracePolls.title%",
+        "category": "Ralph"
+      },
+      {
         "command": "ralph.toggleUseGit",
         "title": "%command.toggleUseGit.title%",
         "category": "Ralph"
@@ -201,6 +221,18 @@
           "default": "PRD.md",
           "description": "%config.taskFile.desc%"
         },
+        "ralphLoop.progressFile": {
+          "type": "string",
+          "default": "progress.txt",
+          "description": "%config.progressFile.desc%"
+        },
+        "ralphLoop.stableThreshold": {
+          "type": "integer",
+          "default": 7,
+          "minimum": 1,
+          "maximum": 200,
+          "description": "%config.stableThreshold.desc%"
+        },
         "ralphLoop.testCommand": {
           "type": "string",
           "default": "npm run test",
@@ -295,13 +327,14 @@
     }
   },
   "scripts": {
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "node -e \"const fs=require('fs');const cp=require('child_process');if(fs.existsSync('tsconfig.json')){cp.execSync('tsc -p ./',{stdio:'inherit'});}else{console.log('No tsconfig.json found; packaged bundle mode, skipping compile.');}\"",
+    "watch": "node -e \"const fs=require('fs');const cp=require('child_process');if(fs.existsSync('tsconfig.json')){cp.execSync('tsc -watch -p ./',{stdio:'inherit'});}else{console.log('No tsconfig.json found; packaged bundle mode, nothing to watch.');}\"",
     "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
+    "lint": "node -e \"const fs=require('fs');const cp=require('child_process');if(fs.existsSync('src')){cp.execSync('eslint src --ext ts',{stdio:'inherit'});}else{console.log('No src/ directory found; packaged bundle mode, skipping lint.');}\"",
     "test": "echo \"No unit tests configured\" && exit 0",
     "test:integration": "npx ts-node test/integration/test_antigravity_api.ts",
     "test:models": "npx ts-node test/integration/test_models_fixed.ts",
+    "build": "npm run compile",
     "package": "vsce package"
   },
   "devDependencies": {

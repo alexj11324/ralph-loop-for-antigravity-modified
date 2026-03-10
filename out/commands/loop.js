@@ -76,6 +76,9 @@ async function startRalphLoop(context) {
             await vscode.workspace.fs.stat(progressFilePath);
         }
         catch {
+            const pathMod = require("path");
+            const progressDir = vscode.Uri.file(pathMod.dirname(progressFilePath.fsPath));
+            await vscode.workspace.fs.createDirectory(progressDir);
             await vscode.workspace.fs.writeFile(progressFilePath, Buffer.from(""));
             state.progressLogger?.info(`Created progress file: ${config.progressFile}`, "Setup");
         }
@@ -119,9 +122,10 @@ async function startRalphLoop(context) {
                 const progressContent = await vscode.workspace.fs.readFile(progressUri);
                 const progressText = new TextDecoder().decode(progressContent);
                 if (progressText.trim().length > 0) {
-                    // Count completed entries: lines starting with '[' (e.g., "[2026-03-05 06:16] Completed: ...")
+                    // Count only explicit completion entries. Started / progress log lines
+                    // should not advance the resume point.
                     const lines = progressText.split("\n");
-                    progressEntryCount = lines.filter((line) => line.trimStart().startsWith("[")).length;
+                    progressEntryCount = lines.filter((line) => /^\s*\[[^\]]+\]\s+Completed:/i.test(line)).length;
                     hasProgress = progressEntryCount > 0;
                 }
             }
@@ -216,6 +220,7 @@ async function stopRalphLoop() {
         vscode.window.showInformationMessage("Ralph Loop is not running");
         return;
     }
+    const currentSession = state.ralphLoopProvider.currentSession;
     state.progressLogger?.info("Stopping Ralph Loop...", "Loop");
     state.setStopRequested(true);
     if (state.ralphLoopStatus === "paused") {
@@ -250,8 +255,8 @@ async function stopRalphLoop() {
     state.progressLogger?.info("Ralph Loop stopped", "Loop");
     const session = {
         status: "stopped",
-        mode: "Unknown",
-        model: "Unknown",
+        mode: currentSession?.mode ?? "Unknown",
+        model: currentSession?.model ?? "Unknown",
         currentIteration: state.currentIteration,
         maxIterations: state.maxIterations,
         startTime: state.startTime,
@@ -263,6 +268,7 @@ function pauseRalphLoop() {
         vscode.window.showInformationMessage("Ralph Loop is not running");
         return;
     }
+    const currentSession = state.ralphLoopProvider.currentSession;
     if (state.ralphLoopStatus === "running") {
         state.setRalphLoopStatus("paused");
         state.progressLogger?.warn("Ralph Loop paused", "Loop");
@@ -276,8 +282,8 @@ function pauseRalphLoop() {
     if (state.startTime) {
         const session = {
             status: state.ralphLoopStatus,
-            mode: "Unknown",
-            model: "Unknown",
+            mode: currentSession?.mode ?? "Unknown",
+            model: currentSession?.model ?? "Unknown",
             currentIteration: state.currentIteration,
             maxIterations: state.maxIterations,
             startTime: state.startTime,
@@ -290,6 +296,7 @@ async function emergencyStopRalphLoop() {
         vscode.window.showInformationMessage("Ralph Loop is not running");
         return;
     }
+    const currentSession = state.ralphLoopProvider.currentSession;
     state.progressLogger?.error("!!! EMERGENCY STOP REQUESTED !!!", "Loop");
     state.setStopRequested(true);
     state.setRalphLoopStatus("stopped");
@@ -345,8 +352,8 @@ async function emergencyStopRalphLoop() {
     if (state.startTime) {
         const session = {
             status: "stopped",
-            mode: "Unknown",
-            model: "Unknown",
+            mode: currentSession?.mode ?? "Unknown",
+            model: currentSession?.model ?? "Unknown",
             currentIteration: state.currentIteration,
             maxIterations: state.maxIterations,
             startTime: state.startTime,

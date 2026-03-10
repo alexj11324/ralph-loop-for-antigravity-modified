@@ -38,10 +38,13 @@
     "Enter progress file path (relative to workspace root)": "输入进度文件路径（相对于工作区根目录）",
     "Enter stable threshold (number of stable polls before considering agent done)": "输入稳定阈值（判定代理完成所需的稳定轮询次数）",
     "Please enter a number between 1 and 20": "请输入 1 到 20 之间的数字",
+    "Please enter a number between 1 and 200": "请输入 1 到 200 之间的数字",
     "Detected in workspace": "在工作区中检测到",
     "Enter custom path...": "输入自定义路径...",
     "No task file": "无任务文件",
     "detected": "已检测到",
     "No task files detected — enter custom path": "未检测到任务文件 — 请输入自定义路径",
-    "Enter task file path (relative to workspace root)": "输入任务文件路径（相对于工作区根目录）"
+    "Enter task file path (relative to workspace root)": "输入任务文件路径（相对于工作区根目录）",
+    "Continue Anyway": "仍然继续",
+    "Cancel": "取消"
 }

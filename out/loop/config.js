@@ -53,11 +53,16 @@ async function getLoopConfiguration(context) {
         vscode.window.showErrorMessage("No workspace folder open");
         return null;
     }
-    // Use the first workspace folder (this is the workspace for this VS Code window)
-    // Note: We intentionally do NOT use activeTextEditor here because the active
-    // document might be from a different workspace in multi-root scenarios, but
-    // Ralph Loop should operate on the primary workspace of the current window.
-    const workspaceRoot = workspaceFolders[0].uri.fsPath;
+    // Prefer the active editor's workspace so configuration pickers and loop
+    // execution target the same folder in multi-root workspaces.
+    let workspaceRoot = workspaceFolders[0].uri.fsPath;
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor) {
+        const activeWorkspace = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
+        if (activeWorkspace) {
+            workspaceRoot = activeWorkspace.uri.fsPath;
+        }
+    }
     const config = vscode.workspace.getConfiguration("ralphLoop");
     const workspaceState = context.workspaceState;
     // Use persisted values or fall back to defaults
