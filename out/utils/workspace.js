@@ -58,9 +58,41 @@ async function checkAntigravityAutonomy() {
 function initializeWorkspaceState(context) {
     const workspaceState = context.workspaceState;
     const config = vscode.workspace.getConfiguration("ralphLoop");
-    if (!workspaceState.get("ralph.lastPromptFile")) {
-        workspaceState.update("ralph.lastPromptFile", config.get("promptFile", "docs/tasks/prompt.md"));
+    const fs = require("fs");
+    const pathMod = require("path");
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    const workspaceRoot = workspaceFolders?.[0]?.uri.fsPath;
+    // Helper: migrate bare filename to docs/tasks/ if the docs/tasks/ variant exists
+    function migrateToDocsTasksIfNeeded(stateKey, configKey, defaultValue) {
+        let current = workspaceState.get(stateKey);
+        if (!current) {
+            // No cached value — set from config default
+            workspaceState.update(stateKey, config.get(configKey, defaultValue));
+            return;
+        }
+        // If it's already a docs/tasks/ path or absolute path, no migration needed
+        if (current.startsWith("docs/tasks/") || (pathMod && pathMod.isAbsolute(current))) {
+            return;
+        }
+        // Try to migrate: if docs/tasks/<filename> exists but root/<filename> doesn't
+        if (workspaceRoot) {
+            const docsPath = pathMod.join(workspaceRoot, "docs/tasks", current);
+            const rootPath = pathMod.join(workspaceRoot, current);
+            try {
+                if (fs.existsSync(docsPath)) {
+                    const newValue = "docs/tasks/" + current;
+                    workspaceState.update(stateKey, newValue);
+                    state.progressLogger?.info(`Auto-migrated ${stateKey}: ${current} → ${newValue}`, "Migration");
+                }
+            }
+            catch (e) {
+                // Ignore filesystem errors during migration
+            }
+        }
     }
+    migrateToDocsTasksIfNeeded("ralph.lastPromptFile", "promptFile", "docs/tasks/prompt.md");
+    migrateToDocsTasksIfNeeded("ralph.lastTaskFile", "taskFile", "docs/tasks/PRD.md");
+    migrateToDocsTasksIfNeeded("ralph.lastProgressFile", "progressFile", "docs/tasks/progress.txt");
     if (!workspaceState.get("ralph.lastMaxIterations")) {
         workspaceState.update("ralph.lastMaxIterations", config.get("maxIterations", 200));
     }

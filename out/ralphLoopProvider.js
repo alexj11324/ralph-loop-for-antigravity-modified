@@ -86,12 +86,33 @@ class RalphLoopProvider {
             config.get("defaultModel", "Claude Opus 4.6 (Thinking)");
         const maxIterations = workspaceState.get("ralph.lastMaxIterations") ??
             config.get("maxIterations", 200);
-        const promptFile = workspaceState.get("ralph.lastPromptFile") ??
+        // Auto-resolve helper: if bare filename, check docs/tasks/ variant
+        const fs = require("fs");
+        const pathMod = require("path");
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        const workspaceRoot = workspaceFolders?.[0]?.uri.fsPath;
+        const autoResolve = (value, stateKey) => {
+            if (!value || !workspaceRoot) return value;
+            if (value.startsWith("docs/tasks/") || pathMod.isAbsolute(value)) return value;
+            const docsPath = pathMod.join(workspaceRoot, "docs/tasks", value);
+            try {
+                if (fs.existsSync(docsPath)) {
+                    const newValue = "docs/tasks/" + value;
+                    if (stateKey) workspaceState.update(stateKey, newValue);
+                    return newValue;
+                }
+            } catch (e) { }
+            return value;
+        };
+        let promptFile = workspaceState.get("ralph.lastPromptFile") ??
             config.get("promptFile", "docs/tasks/prompt.md");
-        const taskFile = workspaceState.get("ralph.lastTaskFile") ??
+        promptFile = autoResolve(promptFile, "ralph.lastPromptFile");
+        let taskFile = workspaceState.get("ralph.lastTaskFile") ??
             config.get("taskFile", "docs/tasks/PRD.md");
-        const progressFile = workspaceState.get("ralph.lastProgressFile") ??
+        taskFile = autoResolve(taskFile, "ralph.lastTaskFile");
+        let progressFile = workspaceState.get("ralph.lastProgressFile") ??
             config.get("progressFile", "docs/tasks/progress.txt");
+        progressFile = autoResolve(progressFile, "ralph.lastProgressFile");
         const stableThreshold = workspaceState.get("ralph.lastStableThreshold") ??
             config.get("stableThreshold", 7);
         const pollInterval = workspaceState.get("ralph.lastPollInterval") ??
