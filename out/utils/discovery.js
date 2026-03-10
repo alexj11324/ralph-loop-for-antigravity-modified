@@ -65,12 +65,12 @@ async function discoverPromptFiles(workspaceRoot) {
                 promptFiles.push(fileName);
             }
         }
-        // Search for files with PROMPT, INSTRUCTION, CONTEXT in the name
+        // Only search in docs/tasks/ (the standard deliverable path)
         const pattern = new vscode.RelativePattern(
             workspaceRoot,
-            "**/{*PROMPT*,*prompt*,*INSTRUCTION*,*instruction*,*CONTEXT*}.{md,txt}"
+            "docs/tasks/{*PROMPT*,*prompt*,*INSTRUCTION*,*instruction*,*CONTEXT*}.{md,txt}"
         );
-        const files = await vscode.workspace.findFiles(pattern, "**/node_modules/**", 20);
+        const files = await vscode.workspace.findFiles(pattern, undefined, 20);
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
             if (!promptFiles.includes(relativePath)) {
@@ -107,12 +107,12 @@ async function discoverTaskFiles(workspaceRoot) {
                 taskFiles.push(pattern);
             }
         }
-        // Also search for any file with TASK, PRD, TODO, SPEC, etc. in the name
-        const searchPattern = new vscode.RelativePattern(
+        // Only search in docs/tasks/ (the standard deliverable path)
+        const docsTasksPattern = new vscode.RelativePattern(
             workspaceRoot,
-            "**/{*TASK*,*PRD*,*TODO*,*SPEC*,*REQUIREMENT*,*BACKLOG*,*ROADMAP*}.{md,txt}"
+            "docs/tasks/{*TASK*,*PRD*,*TODO*,*SPEC*,*REQUIREMENT*,*BACKLOG*,*ROADMAP*,*prd*,*task*}.{md,txt}"
         );
-        const files = await vscode.workspace.findFiles(searchPattern, "**/node_modules/**", 20);
+        const files = await vscode.workspace.findFiles(docsTasksPattern, undefined, 20);
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
             if (!taskFiles.includes(relativePath) && !relativePath.includes("progress")) {
