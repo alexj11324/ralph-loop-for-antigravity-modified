@@ -69,10 +69,29 @@ async function getLoopConfiguration(context) {
         config.get("defaultModel", "Gemini 3 Flash");
     const maxIterations = workspaceState.get("ralph.lastMaxIterations") ??
         config.get("maxIterations", 200);
-    const taskFile = workspaceState.get("ralph.lastTaskFile") ??
+    const taskFileRaw = workspaceState.get("ralph.lastTaskFile") ??
         config.get("taskFile", "PRD.md");
-    const progressFile = workspaceState.get("ralph.lastProgressFile") ??
+    const progressFileRaw = workspaceState.get("ralph.lastProgressFile") ??
         config.get("progressFile", "progress.txt");
+    // Auto-resolve: if configured path doesn't exist, try docs/tasks/ variant
+    const fs = require("fs");
+    const pathMod = require("path");
+    let taskFile = taskFileRaw;
+    if (taskFile && !pathMod.isAbsolute(taskFile) && !taskFile.startsWith("docs/tasks/")) {
+        const rootPath = pathMod.join(workspaceRoot, taskFile);
+        const docsPath = pathMod.join(workspaceRoot, "docs/tasks", taskFile);
+        if (!fs.existsSync(rootPath) && fs.existsSync(docsPath)) {
+            taskFile = "docs/tasks/" + taskFile;
+        }
+    }
+    let progressFile = progressFileRaw;
+    if (progressFile && !pathMod.isAbsolute(progressFile) && !progressFile.startsWith("docs/tasks/")) {
+        const rootPath = pathMod.join(workspaceRoot, progressFile);
+        const docsPath = pathMod.join(workspaceRoot, "docs/tasks", progressFile);
+        if (!fs.existsSync(rootPath) && fs.existsSync(docsPath)) {
+            progressFile = "docs/tasks/" + progressFile;
+        }
+    }
     const stableThreshold = workspaceState.get("ralph.lastStableThreshold") ??
         config.get("stableThreshold", 7);
     const pollIntervalRaw = workspaceState.get("ralph.lastPollInterval") ??

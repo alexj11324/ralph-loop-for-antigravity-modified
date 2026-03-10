@@ -86,7 +86,8 @@ async function discoverPromptFiles(workspaceRoot) {
     }
 }
 async function discoverTaskFiles(workspaceRoot) {
-    const taskFiles = [];
+    const rootFiles = [];
+    const docsFiles = [];
     try {
         const realNames = await _readRootFileNames(workspaceRoot);
         const patterns = [
@@ -103,8 +104,8 @@ async function discoverTaskFiles(workspaceRoot) {
             "PRD.txt", "TASKS.txt", "TODO.txt",
         ];
         for (const pattern of patterns) {
-            if (realNames.has(pattern) && !taskFiles.includes(pattern)) {
-                taskFiles.push(pattern);
+            if (realNames.has(pattern) && !rootFiles.includes(pattern)) {
+                rootFiles.push(pattern);
             }
         }
         // Only search in docs/tasks/ (the standard deliverable path)
@@ -115,11 +116,13 @@ async function discoverTaskFiles(workspaceRoot) {
         const files = await vscode.workspace.findFiles(docsTasksPattern, undefined, 20);
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
-            if (!taskFiles.includes(relativePath) && !relativePath.includes("progress")) {
-                taskFiles.push(relativePath);
+            if (!docsFiles.includes(relativePath) && !relativePath.includes("progress")) {
+                docsFiles.push(relativePath);
             }
         }
-        return [...new Set(taskFiles)].sort();
+        // Priority: docs/tasks/ first, then root files
+        const combined = [...docsFiles.sort(), ...rootFiles.sort()];
+        return [...new Set(combined)];
     }
     catch (error) {
         state.progressLogger?.error(`Error discovering task files: ${error}`, "Discovery");
