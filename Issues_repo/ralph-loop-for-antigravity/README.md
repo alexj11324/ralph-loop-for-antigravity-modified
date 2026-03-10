@@ -61,6 +61,56 @@ Use `Ralph: Emergency Stop Ralph Loop` from the Command Palette (Cmd/Ctrl+Shift+
 ### Token extraction failing
 Ensure Antigravity is running. If auto-discovery fails, manually configure the CSRF token and port in settings.
 
+## Default File Paths
+
+Ralph Loop searches for task and prompt files in the following locations **only**:
+
+| File Type | Search Paths |
+|-----------|-------------|
+| Task File | `./PRD.md`, `./TASKS.md`, `./TODO.md`, etc. (workspace root) |
+| | `docs/tasks/*.md` (standard deliverable directory) |
+| Prompt File | `./prompt.md`, `./PROMPT.md`, etc. (workspace root) |
+| | `docs/tasks/prompt.md` (standard deliverable directory) |
+| Progress File | `./progress.txt` (workspace root, default) |
+| | `docs/tasks/progress.txt` (recommended) |
+
+> **Recommended directory structure:**
+> ```
+> <workspace>/
+> └── docs/tasks/
+>     ├── PRD.md          ← task file
+>     ├── prompt.md       ← prompt file
+>     └── progress.txt    ← progress file
+> ```
+
+## CLI Tool (`ralph-loop`)
+
+Install the CLI for terminal / agent / CI usage:
+
+```bash
+npm install -g ralph-loop
+```
+
+**Examples:**
+```bash
+# Basic usage
+ralph-loop -w /path/to/project
+
+# Benchmark with long poll interval
+ralph-loop -w . --poll-interval 2m --max-iterations 50
+
+# Custom model + Planning mode
+ralph-loop -w . --model "Claude Sonnet 4.6 (Thinking)" --mode Planning
+
+# Resume from checkpoint
+ralph-loop -w . --resume
+
+# Dry-run (show config only)
+ralph-loop -w . --poll-interval 30s --dry-run
+```
+
+Run `ralph-loop --help` for full options.
+
 ## Fork 改进 (alexj11324/ralph-loop-for-antigravity-modified)
 
 本仓库基于 [原始项目](https://github.com/abhishekbhakat/ralph-loop-for-antigravity) 进行了以下改进：
