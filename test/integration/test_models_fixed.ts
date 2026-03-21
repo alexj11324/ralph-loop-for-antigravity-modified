@@ -83,7 +83,7 @@ async function probeGrpcPort(port: number, csrfToken: string): Promise<boolean> 
         const timeout = setTimeout(() => resolve(false), 2000);
 
         try {
-            const client = http2.connect(`https://127.0.0.1:${port}`, { rejectUnauthorized: false });
+            const client = http2.connect(`https://127.0.0.1:${port}`);
 
             client.on('error', () => {
                 clearTimeout(timeout);
@@ -382,7 +382,7 @@ async function testModelSelection() {
     // =====================
     console.log('\n=== Testing All Models with New Encoding ===\n');
 
-    const client = http2.connect(`https://127.0.0.1:${port}`, { rejectUnauthorized: false });
+    const client = http2.connect(`https://127.0.0.1:${port}`);
     const results: { model: string; mode: string; status: number; ok: boolean }[] = [];
 
     for (const modelName of Object.keys(MODEL_IDS)) {

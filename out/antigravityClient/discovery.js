@@ -493,9 +493,7 @@ async function probeGrpcPort(port, csrfToken) {
             resolve(false);
         }, 2000);
         try {
-            const client = http2.connect(`https://127.0.0.1:${port}`, {
-                rejectUnauthorized: false,
-            });
+            const client = http2.connect(`https://127.0.0.1:${port}`);
             client.on("error", () => {
                 clearTimeout(timeout);
                 client.close();
