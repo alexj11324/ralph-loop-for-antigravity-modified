@@ -50,7 +50,7 @@ async function _readRootFileNames(workspaceRoot) {
     }
 }
 async function discoverPromptFiles(workspaceRoot) {
-    const promptFiles = [];
+    const promptFiles = new Set();
     try {
         const realNames = await _readRootFileNames(workspaceRoot);
         const commonPromptFiles = [
@@ -62,8 +62,8 @@ async function discoverPromptFiles(workspaceRoot) {
             "CONTEXT.md", "context.md",
         ];
         for (const fileName of commonPromptFiles) {
-            if (realNames.has(fileName) && !promptFiles.includes(fileName)) {
-                promptFiles.push(fileName);
+            if (realNames.has(fileName)) {
+                promptFiles.add(fileName);
             }
         }
         // Only search in docs/tasks/ (the standard deliverable path)
@@ -74,12 +74,9 @@ async function discoverPromptFiles(workspaceRoot) {
         const files = await vscode.workspace.findFiles(pattern, undefined, 20);
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
-            if (!promptFiles.includes(relativePath)) {
-                promptFiles.push(relativePath);
-            }
+            promptFiles.add(relativePath);
         }
-        const uniqueFiles = [...new Set(promptFiles)];
-        return uniqueFiles.sort();
+        return [...promptFiles].sort();
     }
     catch (error) {
         state.progressLogger?.error(`Error discovering prompt files: ${error}`, "Discovery");
@@ -87,8 +84,8 @@ async function discoverPromptFiles(workspaceRoot) {
     }
 }
 async function discoverTaskFiles(workspaceRoot) {
-    const rootFiles = [];
-    const docsFiles = [];
+    const rootFiles = new Set();
+    const docsFiles = new Set();
     try {
         const realNames = await _readRootFileNames(workspaceRoot);
         const patterns = [
@@ -105,8 +102,8 @@ async function discoverTaskFiles(workspaceRoot) {
             "PRD.txt", "TASKS.txt", "TODO.txt",
         ];
         for (const pattern of patterns) {
-            if (realNames.has(pattern) && !rootFiles.includes(pattern)) {
-                rootFiles.push(pattern);
+            if (realNames.has(pattern)) {
+                rootFiles.add(pattern);
             }
         }
         // Only search in docs/tasks/ (the standard deliverable path)
@@ -117,12 +114,12 @@ async function discoverTaskFiles(workspaceRoot) {
         const files = await vscode.workspace.findFiles(docsTasksPattern, undefined, 20);
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
-            if (!docsFiles.includes(relativePath) && !relativePath.includes("progress")) {
-                docsFiles.push(relativePath);
+            if (!relativePath.includes("progress")) {
+                docsFiles.add(relativePath);
             }
         }
         // Priority: docs/tasks/ first, then root files
-        const combined = [...docsFiles.sort(), ...rootFiles.sort()];
+        const combined = [...[...docsFiles].sort(), ...[...rootFiles].sort()];
         return [...new Set(combined)];
     }
     catch (error) {
@@ -132,8 +129,8 @@ async function discoverTaskFiles(workspaceRoot) {
 }
 
 async function discoverProgressFiles(workspaceRoot) {
-    const rootFiles = [];
-    const docsFiles = [];
+    const rootFiles = new Set();
+    const docsFiles = new Set();
     try {
         const realNames = await _readRootFileNames(workspaceRoot);
         const patterns = [
@@ -142,8 +139,8 @@ async function discoverProgressFiles(workspaceRoot) {
             "history.txt", "history.md", "HISTORY.txt", "HISTORY.md"
         ];
         for (const pattern of patterns) {
-            if (realNames.has(pattern) && !rootFiles.includes(pattern)) {
-                rootFiles.push(pattern);
+            if (realNames.has(pattern)) {
+                rootFiles.add(pattern);
             }
         }
 
@@ -155,13 +152,11 @@ async function discoverProgressFiles(workspaceRoot) {
         const files = await vscode.workspace.findFiles(docsTasksPattern, undefined, 20);
         for (const file of files) {
             const relativePath = vscode.workspace.asRelativePath(file);
-            if (!docsFiles.includes(relativePath)) {
-                docsFiles.push(relativePath);
-            }
+            docsFiles.add(relativePath);
         }
 
         // Priority: docs/tasks/ first, then root files
-        const combined = [...docsFiles.sort(), ...rootFiles.sort()];
+        const combined = [...[...docsFiles].sort(), ...[...rootFiles].sort()];
         return [...new Set(combined)];
     }
     catch (error) {
