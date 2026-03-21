@@ -383,9 +383,9 @@ async function extractOAuthToken() {
         try {
             const content = await fs.promises.readFile(dbPath);
             const contentStr = content.toString("utf8");
-            const tokenMatch = contentStr.match(/ya29\.[A-Za-z0-9_-]{50,}/);
-            if (tokenMatch) {
-                return tokenMatch[0];
+            const tokenMatches = contentStr.match(/ya29\.[A-Za-z0-9_-]{50,}/g);
+            if (tokenMatches && tokenMatches.length > 0) {
+                return tokenMatches[tokenMatches.length - 1];
             }
         }
         catch {

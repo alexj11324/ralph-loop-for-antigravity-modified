@@ -74,7 +74,7 @@ suite("OAuth Token Extraction Tests", () => {
     assert.strictEqual(token, null, "Should not extract invalid token format");
   });
 
-  test("should extract first token when multiple exist (potential 401 cause)", async () => {
+  test("should extract the most recent token when multiple exist", async () => {
     const stateDir = path.join(tempDir, "Library", "Application Support", "Antigravity", "User", "globalStorage");
     fs.mkdirSync(stateDir, { recursive: true });
     
@@ -82,9 +82,8 @@ suite("OAuth Token Extraction Tests", () => {
     fs.writeFileSync(stateFile, mockMultipleTokens);
 
     const token = await extractOAuthToken();
-    // This test shows the bug - it extracts the first (possibly expired) token
-    assert.strictEqual(token, mockExpiredToken, "Extracts first token which may be expired");
-    console.log("WARNING: First token extracted may be expired, causing 401 errors");
+    // This test confirms the fix - it should now extract the last token found (usually the most recent)
+    assert.strictEqual(token, mockValidToken, "Should extract the last token which is typically the most recent");
   });
 
   test("should validate token format matches ya29 pattern", async () => {
