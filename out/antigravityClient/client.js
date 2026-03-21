@@ -50,9 +50,7 @@ class AntigravityClient {
     }
     async connect() {
         return new Promise((resolve, reject) => {
-            this.client = http2.connect(`https://127.0.0.1:${this.config.port}`, {
-                rejectUnauthorized: false,
-            });
+            this.client = http2.connect(`https://127.0.0.1:${this.config.port}`);
             let connected = false;
             this.client.on("connect", () => {
                 connected = true;

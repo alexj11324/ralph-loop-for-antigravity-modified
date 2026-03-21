@@ -49,7 +49,7 @@ async function probeGrpcPort(port: number, csrfToken: string): Promise<boolean> 
         const timeout = setTimeout(() => resolve(false), 2000);
 
         try {
-            const client = http2.connect(`https://127.0.0.1:${port}`, { rejectUnauthorized: false });
+            const client = http2.connect(`https://127.0.0.1:${port}`);
 
             client.on('error', () => {
                 clearTimeout(timeout);
@@ -384,7 +384,7 @@ async function testAllModelsAndModes() {
     console.log('Testing All Models in Fast and Planning Mode');
     console.log('========================================\n');
 
-    const client = http2.connect(`https://127.0.0.1:${PORT}`, { rejectUnauthorized: false });
+    const client = http2.connect(`https://127.0.0.1:${PORT}`);
 
     const results: { variant: string; mode: string; model: string; status: number; body: string }[] = [];
     const prompt = 'Say "Hello" and nothing else.';

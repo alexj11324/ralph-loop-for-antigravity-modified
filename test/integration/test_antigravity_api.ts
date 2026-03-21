@@ -95,7 +95,7 @@ async function probeGrpcPort(port: number, csrfToken: string): Promise<boolean> 
         const timeout = setTimeout(() => resolve(false), 2000);
 
         try {
-            const client = http2.connect(`https://127.0.0.1:${port}`, { rejectUnauthorized: false });
+            const client = http2.connect(`https://127.0.0.1:${port}`);
 
             client.on('error', () => {
                 clearTimeout(timeout);
@@ -663,7 +663,7 @@ async function testAntigravityAPI() {
     }
 
     try {
-        const client = http2.connect(`https://127.0.0.1:${PORT}`, { rejectUnauthorized: false });
+        const client = http2.connect(`https://127.0.0.1:${PORT}`);
 
         console.log('\n=== Antigravity API Integration Test ===\n');
 
