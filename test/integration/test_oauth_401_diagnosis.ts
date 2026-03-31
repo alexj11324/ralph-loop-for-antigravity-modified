@@ -2,7 +2,14 @@ import * as http2 from "http2";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { execSync } from "child_process";
+import {
+    ldField
+} from "../../out/antigravityClient/protobuf";
+import {
+    extractAntigravityFromProcess,
+    discoverAntigravityPort,
+    extractOAuthToken
+} from "../../out/antigravityClient/discovery";
 
 /**
  * OAuth Token 401 Error Diagnosis Test
@@ -22,22 +29,8 @@ import { execSync } from "child_process";
  * - Multiple Antigravity instances with different tokens
  */
 
-// Protobuf helper
-function ldField(tag: number, data: string | Buffer): Buffer {
-  const tagByte = (tag << 3) | 2;
-  const body = typeof data === "string" ? Buffer.from(data) : data;
-  let l = body.length;
-  let lenBytes: number[] = [];
-  if (l < 128) {
-    lenBytes = [l];
-  } else {
-    lenBytes = [(l & 0x7f) | 0x80, l >> 7];
-  }
-  return Buffer.concat([Buffer.from([tagByte]), Buffer.from(lenBytes), body]);
-}
-
 // Extract OAuth token from Antigravity storage (same logic as discovery.ts)
-function extractOAuthTokenFromFile(): { token: string | null; path: string; allTokens?: string[]; error?: string } {
+async function extractOAuthTokenWithDiagnostics(): Promise<{ token: string | null; path: string; allTokens?: string[]; error?: string }> {
   const homeDir = os.homedir();
 
   const possiblePaths = [
@@ -164,85 +157,6 @@ async function testOAuthToken(port: number, csrfToken: string, oauthToken: strin
   });
 }
 
-// Extract CSRF token from process
-function extractCsrfToken(): string | null {
-  try {
-    const psOutput = execSync("ps -ax -o pid=,command=", { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 });
-    const lines = psOutput.split("\n");
-
-    for (const line of lines) {
-      const isLanguageServer = line.includes("language_server_macos") || line.includes("language_server");
-      const isAntigravity = line.includes("--app_data_dir antigravity") || line.toLowerCase().includes("/antigravity/");
-
-      if (isLanguageServer && isAntigravity) {
-        const csrfMatch = line.match(/--csrf_token\s+([a-f0-9-]+)/i);
-        if (csrfMatch) {
-          return csrfMatch[1];
-        }
-      }
-    }
-  } catch {
-    // Ignore
-  }
-  return null;
-}
-
-// Extract listening port for Antigravity
-function extractListeningPort(pid: number): number | null {
-  try {
-    const lsofOutput = execSync(`lsof -nP -iTCP -sTCP:LISTEN -p ${pid} 2>/dev/null`, { encoding: "utf8", maxBuffer: 1024 * 1024 });
-    const lines = lsofOutput.split("\n");
-    for (const line of lines) {
-      // macOS lsof sometimes ignores -p filter, so manually check PID
-      const pidMatch = line.match(new RegExp(`^\\S+\\s+${pid}\\s`));
-      if (!pidMatch) continue;
-      
-      if (line.includes("TCP") && line.includes("LISTEN") && line.includes("127.0.0.1")) {
-        const portMatch = line.match(/:(\d+)\s*\(LISTEN\)/);
-        if (portMatch) {
-          return parseInt(portMatch[1], 10);
-        }
-      }
-    }
-  } catch {
-    // Ignore
-  }
-  return null;
-}
-
-// Find Antigravity PID
-function findAntigravityPid(): number | null {
-  try {
-    const psOutput = execSync("ps -ax -o pid=,command=", { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 });
-    const lines = psOutput.split("\n");
-
-    for (const line of lines) {
-      const isLanguageServer = line.includes("language_server_macos") || line.includes("language_server");
-      const isAntigravity = line.includes("--app_data_dir antigravity") || line.toLowerCase().includes("/antigravity/");
-
-      if (isLanguageServer && isAntigravity) {
-        const pidMatch = line.trim().match(/^(\d+)/);
-        if (pidMatch) {
-          return parseInt(pidMatch[1], 10);
-        }
-      }
-    }
-  } catch {
-    // Ignore
-  }
-  return null;
-}
-
-// Count Antigravity instances
-function countAntigravityInstances(): number {
-  try {
-    const result = execSync("ps aux | grep -E 'language_server.*antigravity|antigravity.*language_server' | grep -v grep | wc -l", { encoding: "utf8" });
-    return parseInt(result.trim(), 10);
-  } catch {
-    return 0;
-  }
-}
-
 // Main diagnostic function
 async function diagnose401Error() {
   console.log("\n═══════════════════════════════════════════════════════════");
@@ -250,7 +164,7 @@ async function diagnose401Error() {
   console.log("═══════════════════════════════════════════════════════════\n");
 
   // Step 1: Extract and validate token
-  const extraction = extractOAuthTokenFromFile();
+  const extraction = await extractOAuthTokenWithDiagnostics();
   
   if (!extraction.token) {
     console.log("❌ FAILED: Could not extract OAuth token");
@@ -290,34 +204,19 @@ async function diagnose401Error() {
   console.log("\nStep 3: Antigravity Process Check");
   console.log("─────────────────────────────────");
   
-  const instanceCount = countAntigravityInstances();
-  if (instanceCount > 1) {
-    console.log(`⚠️  WARNING: ${instanceCount} Antigravity instances detected!`);
-    console.log("   Multiple instances can cause token conflicts.");
-    console.log("   Run: killall -9 Antigravity");
-  } else if (instanceCount === 0) {
+  const processInfo = await extractAntigravityFromProcess();
+  if (!processInfo) {
     console.log("❌ No Antigravity instances found!");
     console.log("   Make sure Antigravity IDE is running.");
     process.exit(1);
-  } else {
-    console.log("✓ Single Antigravity instance running");
   }
 
-  const pid = findAntigravityPid();
-  if (!pid) {
-    console.log("❌ Could not find Antigravity PID");
-    process.exit(1);
-  }
+  const { pid, csrfToken } = processInfo;
+  console.log(`✓ Single Antigravity instance running`);
   console.log(`✓ Process ID: ${pid}`);
-
-  const csrfToken = extractCsrfToken();
-  if (!csrfToken) {
-    console.log("❌ Could not extract CSRF token");
-    process.exit(1);
-  }
   console.log(`✓ CSRF token: ${csrfToken.substring(0, 16)}...`);
 
-  const port = extractListeningPort(pid);
+  const port = await discoverAntigravityPort(pid);
   if (!port) {
     console.log("❌ Could not find gRPC port");
     process.exit(1);
@@ -358,13 +257,7 @@ async function diagnose401Error() {
         console.log("   → Restart Antigravity to regenerate\n");
       }
       
-      if (instanceCount > 1) {
-        console.log("4. Kill extra Antigravity instances");
-        console.log("   → killall -9 Antigravity");
-        console.log("   → Restart only one instance\n");
-      }
-      
-      console.log("5. Check internet connection");
+      console.log("4. Check internet connection");
       console.log("   → Token validation requires network access\n");
     }
     process.exit(1);

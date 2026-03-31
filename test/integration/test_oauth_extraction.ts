@@ -2,7 +2,7 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { extractOAuthToken } from "../../src/antigravityClient/discovery";
+import { extractOAuthToken } from "../../out/antigravityClient/discovery";
 
 /**
  * Tests for OAuth token extraction and validation
