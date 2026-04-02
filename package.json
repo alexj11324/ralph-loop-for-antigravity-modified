@@ -313,7 +313,7 @@
     "lint": "echo \"No eslint configuration found\" && exit 0",
     "test": "echo \"No unit tests configured\" && exit 0",
     "test:integration": "npx ts-node test/integration/test_antigravity_api.ts",
-    "test:models": "npx ts-node test/integration/test_models_fixed.ts",
+    "test:models": "npx ts-node test/integration/test_models.ts",
     "package": "vsce package"
   },
   "devDependencies": {
