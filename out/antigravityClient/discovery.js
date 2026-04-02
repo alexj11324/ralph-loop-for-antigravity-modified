@@ -46,7 +46,6 @@ const util = __importStar(require("util"));
 const state = __importStar(require("../state"));
 const child_process_1 = require("child_process");
 const protobuf_1 = require("./protobuf");
-const execAsync = util.promisify(child_process_1.exec);
 const execFileAsync = util.promisify(child_process_1.execFile);
 let _cachedWindowsVersion = null;
 const isWindows = process.platform === "win32";
@@ -78,9 +77,7 @@ async function execCommand(command, args = [], options = {}) {
             maxBuffer: 10 * 1024 * 1024,
             ...options,
         };
-        const { stdout, stderr } = hasArgs
-            ? await execFileAsync(command, args, execOptions)
-            : await execAsync(command, execOptions);
+        const { stdout, stderr } = await execFileAsync(command, args, execOptions);
         const output = stdout;
         const normalizedStderr = stderr || "";
         if (isDebugLoggingEnabled()) {
