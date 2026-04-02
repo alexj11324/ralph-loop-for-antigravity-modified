@@ -245,13 +245,16 @@ async function extractCredentials(): Promise<{ port: number; csrfToken: string; 
 
         let oauthToken: string | null = null;
         for (const dbPath of possiblePaths) {
-            if (fs.existsSync(dbPath)) {
-                const content = fs.readFileSync(dbPath).toString('utf8');
-                const tokenMatch = content.match(/ya29\.[A-Za-z0-9_-]{50,}/);
+            try {
+                const content = await fs.promises.readFile(dbPath);
+                const contentStr = content.toString('utf8');
+                const tokenMatch = contentStr.match(/ya29\.[A-Za-z0-9_-]{50,}/);
                 if (tokenMatch) {
                     oauthToken = tokenMatch[0];
                     break;
                 }
+            } catch (e) {
+                continue;
             }
         }
 
