@@ -44,14 +44,13 @@ exports.initializeGitBranch = initializeGitBranch;
 exports.initializeGitSession = initializeGitSession;
 const cp = __importStar(require("child_process"));
 const util = __importStar(require("util"));
-const execAsync = util.promisify(cp.exec);
 const execFileAsync = util.promisify(cp.execFile);
 /**
  * Check if the given directory is a git repository
  */
 async function isGitRepo(workspaceRoot) {
     try {
-        const { stdout } = await execAsync("git rev-parse --git-dir", {
+        const { stdout } = await execFileAsync("git", ["rev-parse", "--git-dir"], {
             cwd: workspaceRoot,
         });
         return stdout.trim().length > 0;
@@ -65,7 +64,7 @@ async function isGitRepo(workspaceRoot) {
  */
 async function getCurrentBranch(workspaceRoot) {
     try {
-        const { stdout } = await execAsync("git rev-parse --abbrev-ref HEAD", {
+        const { stdout } = await execFileAsync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
             cwd: workspaceRoot,
         });
         return stdout.trim();
